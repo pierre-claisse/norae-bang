@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../src/App";
 import { TOKEN_STORAGE_KEY } from "../src/token/storage";
+import { SHOW_ROMANIZATION_KEY, SHOW_TRANSLATION_KEY } from "../src/ui/lyricPrefs";
 import fixture from "./fixtures/catalog.json";
 
 const TOKEN = "github_pat_fixture_not_a_real_token";
@@ -24,10 +25,13 @@ describe("application", () => {
     const fetchImpl = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response("non", { status: 500 }));
     render(<App deps={{ fetchImpl }} />);
     expect(screen.getByRole("heading", { name: "norae-bang" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Créer un jeton" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /accès restreint/ })).toHaveAttribute(
       "href",
       "https://github.com/settings/personal-access-tokens/new",
     );
+    expect(screen.getByRole("button", { name: "Afficher le jeton" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Jeton GitHub")).toHaveAttribute("placeholder", "github_pat_…");
+    expect(screen.getByText(/reste dans ce navigateur/)).toBeInTheDocument();
     expect(screen.getByText(/pierre-claisse\/norae-bang-data/)).toBeInTheDocument();
     expect(screen.getByText(/Contents/)).toBeInTheDocument();
     expect(screen.queryByRole("searchbox")).toBeNull();
@@ -39,7 +43,7 @@ describe("application", () => {
     const fetchImpl = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response("non", { status: 500 }));
     const user = userEvent.setup();
     render(<App deps={{ fetchImpl }} />);
-    await user.type(screen.getByLabelText("Jeton"), "ghp_notfinegrainedtoken");
+    await user.type(screen.getByLabelText("Jeton GitHub"), "ghp_notfinegrainedtoken");
     await user.click(screen.getByRole("button", { name: "Enregistrer le jeton" }));
     expect(screen.getByRole("alert")).toHaveTextContent(/fine-grained/);
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull();
@@ -50,7 +54,7 @@ describe("application", () => {
     const fetchImpl = mockCatalog();
     const user = userEvent.setup();
     render(<App deps={{ fetchImpl }} />);
-    await user.type(screen.getByLabelText("Jeton"), `  ${TOKEN}  `);
+    await user.type(screen.getByLabelText("Jeton GitHub"), `  ${TOKEN}  `);
     await user.click(screen.getByRole("button", { name: "Enregistrer le jeton" }));
 
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
@@ -84,8 +88,14 @@ describe("application", () => {
     await user.click(await screen.findByRole("link", { name: /Sans paroles/ }));
     expect(await screen.findByText("Les paroles de cette chanson ne sont pas encore disponibles.")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Oublier ou remplacer le jeton" }));
-    expect(await screen.findByLabelText("Jeton")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Jeton" }));
+    expect(screen.getByRole("dialog", { name: "Oublier le jeton ?" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Annuler" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBe(TOKEN);
+    await user.click(screen.getByRole("button", { name: "Jeton" }));
+    await user.click(screen.getByRole("button", { name: "Oublier le jeton" }));
+    expect(await screen.findByLabelText("Jeton GitHub")).toBeInTheDocument();
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull();
     expect(screen.queryByText("Chanson exemple")).toBeNull();
 
@@ -99,7 +109,7 @@ describe("application", () => {
     window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
     render(<App deps={{ fetchImpl: mockCatalog() }} />);
     expect(await screen.findByRole("heading", { name: "예시 노래" })).toBeInTheDocument();
-    expect(screen.queryByLabelText("Jeton")).toBeNull();
+    expect(screen.queryByLabelText("Jeton GitHub")).toBeNull();
   });
 
   it("affiche les erreurs de schéma sans liste partielle", async () => {
@@ -128,11 +138,39 @@ describe("application", () => {
     expect(alert.textContent ?? "").not.toContain(TOKEN);
   });
 
+  it("mémorise le masquage de la romanisation et de la traduction", async () => {
+    at("/norae-bang/chanson/chanson-exemple");
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    const user = userEvent.setup();
+    const first = render(<App deps={{ fetchImpl: mockCatalog() }} />);
+    expect(await screen.findByText("Yesi gasa")).toBeInTheDocument();
+    expect(screen.getByText("Parole exemple")).toBeInTheDocument();
+    expect(screen.getAllByText("Coréen")).toHaveLength(1);
+    expect(screen.queryByText("CORÉEN")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Romanisation" }));
+    expect(screen.queryByText("Yesi gasa")).toBeNull();
+    expect(screen.getByText("Parole exemple")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Traduction" }));
+    expect(screen.queryByText("Parole exemple")).toBeNull();
+    expect(screen.getByText("예시 가사")).toBeInTheDocument();
+    expect(window.localStorage.getItem(SHOW_ROMANIZATION_KEY)).toBe("0");
+    expect(window.localStorage.getItem(SHOW_TRANSLATION_KEY)).toBe("0");
+
+    first.unmount();
+    render(<App deps={{ fetchImpl: mockCatalog() }} />);
+    expect(await screen.findByText("예시 가사")).toBeInTheDocument();
+    expect(screen.queryByText("Yesi gasa")).toBeNull();
+    expect(screen.queryByText("Parole exemple")).toBeNull();
+    expect(screen.getByRole("button", { name: "Romanisation" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Traduction" })).toHaveAttribute("aria-pressed", "false");
+  });
+
   it("oublie un jeton stocké qui n’a pas le bon format", () => {
     window.localStorage.setItem(TOKEN_STORAGE_KEY, "pas-un-jeton");
     const fetchImpl = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response("non", { status: 500 }));
     render(<App deps={{ fetchImpl }} />);
-    expect(screen.getByLabelText("Jeton")).toBeInTheDocument();
+    expect(screen.getByLabelText("Jeton GitHub")).toBeInTheDocument();
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull();
     expect(fetchImpl).not.toHaveBeenCalled();
   });

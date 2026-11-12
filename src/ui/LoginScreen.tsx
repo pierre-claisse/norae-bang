@@ -27,24 +27,31 @@ export function LoginScreen() {
           <p>Ce site n’embarque aucune chanson. Collez un jeton pour lire le répertoire privé.</p>
           <ol>
             <li>
-              Créez un jeton fine-grained.{" "}
               <a href={TOKEN_URL} target="_blank" rel="noreferrer">
-                Créer un jeton
+                Créez un jeton à accès restreint (fine-grained)
               </a>
+              .
             </li>
             <li>
-              Autorisez uniquement le dépôt <strong>pierre-claisse/norae-bang-data</strong>.
+              Autorisez uniquement le dépôt{" "}
+              <code className="repo">
+                pierre-claisse/
+                <wbr />
+                norae-bang-data
+              </code>
+              .
             </li>
             <li>
               Permission : <strong>Contents</strong>, en lecture seule.
             </li>
           </ol>
-          <label htmlFor="token">Jeton</label>
+          <label htmlFor="token">Jeton GitHub</label>
           <div className="token-field">
             <input
               id="token"
               name="token"
               type={visible ? "text" : "password"}
+              placeholder="github_pat_…"
               autoComplete="off"
               autoCapitalize="off"
               autoCorrect="off"
@@ -53,21 +60,42 @@ export function LoginScreen() {
             />
             <button
               type="button"
-              className="secondary"
+              className="icon-button"
               aria-controls="token"
               aria-pressed={visible}
+              aria-label={visible ? "Masquer le jeton" : "Afficher le jeton"}
               onClick={() => setVisible((value) => !value)}
             >
-              {visible ? "Masquer" : "Afficher"}
+              <EyeIcon off={visible} />
             </button>
           </div>
           {error ? <p role="alert">{error}</p> : null}
           <button className="wide" type="submit">
             Enregistrer le jeton
           </button>
-          <p className="hint">Le jeton reste sur cet appareil (localStorage). Il sert seulement à lire l’API GitHub.</p>
+          <p className="hint">Le jeton reste dans ce navigateur et sert seulement à lire les paroles sur GitHub.</p>
         </form>
       </main>
     </>
+  );
+}
+
+function EyeIcon({ off }: { off: boolean }) {
+  return (
+    <svg className="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      {off ? (
+        <>
+          <path d="M4 6 20 18" />
+          <path d="M9.2 9.4A3 3 0 0 0 14.6 14" />
+          <path d="M6.1 7.7C4.4 9.1 3 12 3 12s3.6 6 9 6c1.5 0 2.9-.4 4.1-1" />
+          <path d="M10 6.2A9 9 0 0 1 12 6c5.4 0 9 6 9 6a17 17 0 0 1-2.1 2.7" />
+        </>
+      ) : (
+        <>
+          <path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6z" />
+          <circle cx="12" cy="12" r="2.4" />
+        </>
+      )}
+    </svg>
   );
 }
