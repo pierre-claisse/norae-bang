@@ -62,7 +62,7 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
     <>
       <h1>Répertoire</h1>
       <div className="search">
-        <label htmlFor="recherche">Rechercher</label>
+        <label className="sr-only" htmlFor="recherche">Rechercher</label>
         <div className="search-field">
           <input
             id="recherche"
