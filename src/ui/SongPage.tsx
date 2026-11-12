@@ -124,6 +124,7 @@ function Units({ lines, units }: { lines: readonly LyricLine[]; units: readonly 
             <div className="unit-fr" lang="fr">
               <p>{unit.fr}</p>
               {unit.note ? <p className="unit-note">Note : {unit.note}</p> : null}
+              {unit.variant ? <p className="unit-variant">Variante : {unit.variant}</p> : null}
             </div>
           </article>
         );

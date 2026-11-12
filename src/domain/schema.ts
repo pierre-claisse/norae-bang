@@ -25,7 +25,7 @@ const SONG_KEYS = [
   "notes",
 ] as const;
 const LINE_KEYS = ["id", "stanza", "ko"] as const;
-const UNIT_KEYS = ["from", "to", "fr", "note"] as const;
+const UNIT_KEYS = ["from", "to", "fr", "note", "variant"] as const;
 const SOURCE_KEYS = ["label", "url"] as const;
 
 export type LyricLine = {
@@ -39,6 +39,7 @@ export type LyricUnit = {
   to: string;
   fr: string;
   note: string | null;
+  variant: string | null;
 };
 
 export type Source = {
@@ -344,8 +345,9 @@ function parseUnit(value: unknown, path: string, issues: string[]): LyricUnit | 
   const to = parseRequiredText(take(value, "to", path, issues), `${path}.to`, issues);
   const fr = parseRequiredText(take(value, "fr", path, issues), `${path}.fr`, issues);
   const note = parseNullableText(take(value, "note", path, issues), `${path}.note`, issues);
-  if (issues.length !== before || !from || !to || !fr || note === undefined) return null;
-  return { from, to, fr, note };
+  const variant = parseOptionalNullableText(value, "variant", `${path}.variant`, issues);
+  if (issues.length !== before || !from || !to || !fr || note === undefined || variant === undefined) return null;
+  return { from, to, fr, note, variant };
 }
 
 function checkUnits(lines: readonly LyricLine[], units: readonly LyricUnit[], path: string, issues: string[]) {
@@ -499,6 +501,16 @@ function parseNullableText(value: unknown, path: string, issues: string[]): stri
     return undefined;
   }
   return value;
+}
+
+function parseOptionalNullableText(
+  record: Record<string, unknown>,
+  key: string,
+  path: string,
+  issues: string[],
+): string | null | undefined {
+  if (!Object.prototype.hasOwnProperty.call(record, key)) return null;
+  return parseNullableText(record[key], path, issues);
 }
 
 function take(record: Record<string, unknown>, key: string, path: string, issues: string[]): unknown {

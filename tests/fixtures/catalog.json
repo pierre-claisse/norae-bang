@@ -30,24 +30,27 @@
         { "id": "l10", "stanza": 2, "ko": "마마 바바 사사" }
       ],
       "units": [
-        { "from": "l1", "to": "l1", "fr": "Une seule ligne inventée.", "note": null },
+        { "from": "l1", "to": "l1", "fr": "Une seule ligne inventée.", "note": null, "variant": null },
         {
           "from": "l2",
           "to": "l4",
           "fr": "Trois lignes inventées, sans aucun rapport avec une chanson réelle.",
-          "note": "Jeu de mots inventé pour la fixture."
+          "note": "Jeu de mots inventé pour la fixture.",
+          "variant": "Une édition inventée écrit « 다다 » au lieu de « 마마 »."
         },
         {
           "from": "l5",
           "to": "l6",
           "fr": "Cette unité inventée commence au premier couplet et finit au second.",
-          "note": null
+          "note": null,
+          "variant": null
         },
         {
           "from": "l7",
           "to": "l10",
           "fr": "Quatre lignes inventées pour remplir le couplet suivant.",
-          "note": null
+          "note": null,
+          "variant": null
         }
       ],
       "sources": [{ "label": "Source exemple", "url": "https://example.com/source-exemple" }],
@@ -80,7 +83,7 @@
       "year": null,
       "lyricsStatus": "draft",
       "lines": [{ "id": "b1", "stanza": 1, "ko": "미완성 예시" }],
-      "units": [{ "from": "b1", "to": "b1", "fr": "Brouillon d'une ligne inventée.", "note": null }],
+      "units": [{ "from": "b1", "to": "b1", "fr": "Brouillon d'une ligne inventée.", "note": null, "variant": null }],
       "sources": [],
       "context": null,
       "sourcesNote": null

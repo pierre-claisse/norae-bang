@@ -1,6 +1,6 @@
 # Schéma `songs.json`
 
-Fichier unique à la racine du dépôt privé `pierre-claisse/norae-bang-data`. JSON UTF-8, non chiffré, lisible. L’application n’accepte que la version 1. Une clé inconnue ou absente est une erreur. Les champs nullable sont présents et valent `null` : une chaîne vide est refusée.
+Fichier unique à la racine du dépôt privé `pierre-claisse/norae-bang-data`. JSON UTF-8, non chiffré, lisible. L’application n’accepte que la version 1. Une clé inconnue ou absente est une erreur, sauf les exceptions décrites plus bas (`notes`, `artistLatin`, `units[].variant`). Les champs nullable sont présents et valent `null` : une chaîne vide est refusée.
 
 L’API GitHub Contents ne renvoie pas un fichier de plus de 1 Mo. `songs.json` doit rester sous cette limite. Il n’y a pas de fichier par chanson.
 
@@ -65,8 +65,11 @@ Une unité de sens couvre une suite de lignes consécutives, parfois à cheval s
 | `to` | chaîne | `id` de la dernière ligne. `from` est avant ou égal à `to` dans l’ordre chanté |
 | `fr` | chaîne | traduction française, non vide |
 | `note` | chaîne ou `null` | jeu de mots, niveau de politesse, référence. Non vide si présente |
+| `variant` | chaîne, `null`, ou absente | variante de texte entre éditions, qui change ce qu’on chante. L’absence équivaut à `null`. Chaîne vide refusée. Non vide si présente |
 
 Un tableau `units` vide est valide : la chanson n’a pas de traduction, et l’écran ne propose pas d’en créer une. S’il y a des unités, elles sont dans l’ordre chanté, ne se chevauchent pas, n’ont pas de trou, et couvrent toutes les lignes.
+
+`variant` est facultative. `null` et l’absence de la clé sont acceptés : pas de variante. Une chaîne vide, ou faite seulement d’espaces, est refusée. Quand le texte est présent, il s’affiche sous l’unité, après la note de sens, préfixé « Variante : ».
 
 Exemple factice d’une unité qui commence au couplet 1 et finit au couplet 2 :
 

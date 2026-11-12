@@ -157,6 +157,40 @@ describe("schéma songs.json", () => {
     expect(issues(withUnits(units)).some((issue) => issue.includes("ordre inversé"))).toBe(true);
   });
 
+  it("accepte une variante nulle", () => {
+    const copy = structuredClone(catalog);
+    copy.songs[0]!.units[1]!.variant = null;
+    expect(parseCatalog(copy).songs[0]?.units[1]?.variant).toBeNull();
+    expect(readCatalog(copy).warnings).toEqual([]);
+  });
+
+  it("accepte l’absence de variante et la lit comme null", () => {
+    const input = structuredClone(catalog) as {
+      songs: Array<{ units: Array<Record<string, unknown>> }>;
+    };
+    delete input.songs[0]!.units[0]!.variant;
+    const read = readCatalog(input);
+    expect(read.warnings).toEqual([]);
+    expect(read.catalog.songs[0]?.units[0]?.variant).toBeNull();
+    expect(read.catalog.songs[0]?.units[1]?.variant).toBe("Une édition inventée écrit « 다다 » au lieu de « 마마 ».");
+  });
+
+  it("refuse une variante vide", () => {
+    for (const variant of ["", "   "]) {
+      const copy = structuredClone(catalog);
+      copy.songs[0]!.units[1]!.variant = variant;
+      expect(issues(copy).some((issue) => issue.includes("songs[0].units[1].variant") && issue.includes("chaîne vide"))).toBe(
+        true,
+      );
+    }
+  });
+
+  it("refuse une variante qui n’est pas une chaîne", () => {
+    const copy = structuredClone(catalog) as { songs: Array<{ units: Array<Record<string, unknown>> }> };
+    copy.songs[0]!.units[1]!.variant = 1;
+    expect(issues(copy).some((issue) => issue.includes("chaîne ou null"))).toBe(true);
+  });
+
   it("refuse une romanisation", () => {
     const copy = structuredClone(catalog);
     copy.songs = [{ ...copy.songs[0]!, titleRomanized: "non" } as Catalog["songs"][number]];
