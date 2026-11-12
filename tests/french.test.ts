@@ -23,6 +23,17 @@ describe("typographie française", () => {
     expect(frenchTypography("Jeu de mots inventé pour la fixture.")).toBe("Jeu de mots inventé pour la fixture.");
   });
 
+  it("remplace l’apostrophe droite par l’apostrophe typographique", () => {
+    const curly = "\u2019";
+    expect(frenchTypography("Chanson d'exemple")).toBe(`Chanson d${curly}exemple`);
+    expect(frenchTypography("Unité d'une ligne.")).toBe(`Unité d${curly}une ligne.`);
+    expect(frenchTypography("Note : jeu d'esprit.")).toBe(`Note${THIN}: jeu d${curly}esprit.`);
+    expect(frenchTypography("Variante : l'édition inventée.")).toBe(`Variante${THIN}: l${curly}édition inventée.`);
+    expect(frenchTypography("Contexte d'une fiche.")).toBe(`Contexte d${curly}une fiche.`);
+    expect(frenchTypography("Source d'exemple")).toBe(`Source d${curly}exemple`);
+    expect(frenchTypography("d\u2019abord")).toBe("d\u2019abord");
+  });
+
   it("met en forme la variante factice", () => {
     const variant = fixture.songs[0]?.units[1]?.variant ?? "";
     expect(frenchTypography(`Variante : ${variant}`)).toBe(

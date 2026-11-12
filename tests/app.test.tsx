@@ -82,7 +82,7 @@ describe("application", () => {
       (element) => element.getAttribute("class") ?? element.tagName.toLowerCase(),
     );
     expect(bannerOrder).toEqual(["h1", "title-fr", "meta", "song-context"]);
-    expect(screen.getByText("Phrase de contexte factice, pour la fiche d'exemple.")).toBeInTheDocument();
+    expect(screen.getByText("Phrase de contexte factice, pour la fiche d\u2019exemple.")).toBeInTheDocument();
     expect(screen.getByText(/Remarque de vérification factice/)).toBeInTheDocument();
     expect(screen.getByText(/가짜줄예시/)).toBeInTheDocument();
     expect(screen.getByText("Une seule ligne inventée.")).toBeInTheDocument();
@@ -104,7 +104,7 @@ describe("application", () => {
 
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
     await user.click(await screen.findByRole("link", { name: /Brouillon exemple/ }));
-    expect(await screen.findByText("Brouillon d'une ligne inventée.")).toBeInTheDocument();
+    expect(await screen.findByText("Brouillon d\u2019une ligne inventée.")).toBeInTheDocument();
     expect(screen.getByText(/pas encore été vérifiées/)).toBeInTheDocument();
     expect(screen.queryByText(/Variante\u202F:/)).toBeNull();
     expect(screen.queryByRole("heading", { name: "Sources" })).toBeNull();
@@ -143,7 +143,7 @@ describe("application", () => {
     render(<App deps={{ fetchImpl: mockCatalog(body) }} />);
     expect(await screen.findByRole("heading", { name: "Sources" })).toBeInTheDocument();
     expect(screen.getByText("Ancienne remarque factice.")).toBeInTheDocument();
-    expect(screen.queryByText("Phrase de contexte factice, pour la fiche d'exemple.")).toBeNull();
+    expect(screen.queryByText("Phrase de contexte factice, pour la fiche d\u2019exemple.")).toBeNull();
     expect(spy).toHaveBeenCalledWith(expect.stringContaining("clé dépréciée"));
     spy.mockRestore();
   });
@@ -159,7 +159,7 @@ describe("application", () => {
     window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
     const spy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     render(<App deps={{ fetchImpl: mockCatalog(body) }} />);
-    expect(await screen.findByText("Phrase de contexte factice, pour la fiche d'exemple.")).toBeInTheDocument();
+    expect(await screen.findByText("Phrase de contexte factice, pour la fiche d\u2019exemple.")).toBeInTheDocument();
     expect(screen.queryByText("Ancienne remarque factice.")).toBeNull();
     expect(screen.queryByRole("heading", { name: "Sources" })).toBeNull();
     spy.mockRestore();

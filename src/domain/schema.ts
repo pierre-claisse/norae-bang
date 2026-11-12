@@ -80,7 +80,7 @@ export class CatalogValidationError extends Error {
   }
 }
 
-const CONTEXT_MAX_LENGTH = 200;
+const CONTEXT_MAX_LENGTH = 140;
 
 export type CatalogRead = {
   catalog: Catalog;
@@ -268,7 +268,7 @@ function notesDeprecation(path: string): string {
 function parseContext(value: unknown, path: string, issues: string[]): string | null | undefined {
   const text = parseNullableText(value, path, issues);
   if (typeof text === "string" && [...text].length > CONTEXT_MAX_LENGTH) {
-    issues.push(`${path} : 200 caractères au plus.`);
+    issues.push(`${path} : ${CONTEXT_MAX_LENGTH} caractères au plus.`);
     return undefined;
   }
   return text;
