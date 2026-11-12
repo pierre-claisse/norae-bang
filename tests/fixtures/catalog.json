@@ -54,8 +54,8 @@
         }
       ],
       "sources": [{ "label": "Source exemple", "url": "https://example.com/source-exemple" }],
-      "context": "Phrase de contexte factice, pour la fiche d'exemple.",
-      "sourcesNote": "Remarque de vérification factice : plateformes, variantes et dates inventées."
+      "context": "Phrase de contexte factice, pour la fiche d'exemple : «음음», en quête de proie?",
+      "sourcesNote": "Remarque de vérification factice : plateformes, variantes et dates inventées, pour la mesure de cette fiche d'exemple."
     },
     {
       "id": "sans-traduction",

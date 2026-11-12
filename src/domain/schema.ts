@@ -23,6 +23,7 @@ const SONG_KEYS = [
   "context",
   "sourcesNote",
   "notes",
+  "verificationLog",
 ] as const;
 const LINE_KEYS = ["id", "stanza", "ko"] as const;
 const UNIT_KEYS = ["from", "to", "fr", "note", "variant"] as const;
@@ -61,6 +62,7 @@ export type Song = {
   context: string | null;
   sourcesNote: string | null;
   notes?: string | null;
+  verificationLog?: string | null;
 };
 
 export type Catalog = {
@@ -186,6 +188,10 @@ function parseSong(value: unknown, index: number, ids: Set<string>, issues: stri
   const units = parseUnits(take(value, "units", path, issues), `${path}.units`, issues);
   const sources = parseSources(take(value, "sources", path, issues), `${path}.sources`, issues);
   const prose = parseSongProse(value, path, issues, warnings);
+  const hasVerificationLog = Object.prototype.hasOwnProperty.call(value, "verificationLog");
+  const verificationLog = hasVerificationLog
+    ? parseNullableText(value.verificationLog, `${path}.verificationLog`, issues)
+    : undefined;
 
   if (parsedLines && units && issues.length === before) {
     checkUnits(parsedLines.lines, units, `${path}.units`, issues);
@@ -222,6 +228,7 @@ function parseSong(value: unknown, index: number, ids: Set<string>, issues: stri
     context: prose.context,
     sourcesNote: prose.sourcesNote,
     ...(prose.notes !== undefined ? { notes: prose.notes } : {}),
+    ...(hasVerificationLog && verificationLog !== undefined ? { verificationLog } : {}),
   };
 }
 

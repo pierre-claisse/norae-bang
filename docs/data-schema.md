@@ -1,6 +1,6 @@
 # Schéma `songs.json`
 
-Fichier unique à la racine du dépôt privé `pierre-claisse/norae-bang-data`. JSON UTF-8, non chiffré, lisible. L’application n’accepte que la version 1. Une clé inconnue ou absente est une erreur, sauf les exceptions décrites plus bas (`notes`, `artistLatin`, `units[].variant`). Les champs nullable sont présents et valent `null` : une chaîne vide est refusée.
+Fichier unique à la racine du dépôt privé `pierre-claisse/norae-bang-data`. JSON UTF-8, non chiffré, lisible. L’application n’accepte que la version 1. Une clé inconnue ou absente est une erreur, sauf les exceptions décrites plus bas (`notes`, `artistLatin`, `verificationLog`, `units[].variant`). Les champs nullable sont présents et valent `null` : une chaîne vide est refusée.
 
 L’API GitHub Contents ne renvoie pas un fichier de plus de 1 Mo. `songs.json` doit rester sous cette limite. Il n’y a pas de fichier par chanson.
 
@@ -36,12 +36,15 @@ L’API GitHub Contents ne renvoie pas un fichier de plus de 1 Mo. `songs.json` 
 | `context` | chaîne ou `null` | phrase courte, 140 caractères au plus. Non vide si présente |
 | `sourcesNote` | chaîne ou `null` | remarques de vérification. Non vide si présente |
 | `notes` | chaîne ou `null`, clé optionnelle | déprécié. Voir ci-dessous |
+| `verificationLog` | chaîne, `null`, ou absente | journal de vérification. Jamais affiché. Pas de limite de longueur. Chaîne vide refusée |
 
 `context` et `sourcesNote` sont les champs courants. Ils sont présents et valent `null` quand il n’y a rien à dire. `notes` peut être absent. S’il est présent, le validateur accepte la chanson et émet un avertissement de dépréciation (`clé dépréciée, utiliser context et sourcesNote`). Si `context` et `sourcesNote` sont tous les deux absents, `notes` suffit et les deux nouveaux champs valent `null`. S’il manque les trois, la validation échoue.
 
+`verificationLog` est facultatif. L’absence de la clé est acceptée et n’ajoute pas la propriété. `null` est accepté. Une chaîne vide, ou faite seulement d’espaces, est refusée. Il n’y a pas de longueur maximale. Le site ne l’affiche nulle part.
+
 Ce remplacement ne change pas `schemaVersion` : ce n’est pas un corpus publié.
 
-Affichage : `context` suit le titre coréen, le titre français, puis l’artiste et l’année, en entier. `sourcesNote` est montré en bas, dans la section « Sources », en texte secondaire, avec les liens `sources`. La section n’apparaît que si `sourcesNote`, `sources` ou un `notes` encore affiché a un contenu. Si `context` et `sourcesNote` sont vides et que `notes` a un texte, ce texte est affiché dans « Sources ».
+Affichage : `context` suit le titre coréen, le titre français, puis l’artiste et l’année, en entier. `sourcesNote` est montré en bas, dans la section « Sources », en texte secondaire, avec les liens `sources`. La section n’apparaît que si `sourcesNote`, `sources` ou un `notes` encore affiché a un contenu. Si `context` et `sourcesNote` sont vides et que `notes` a un texte, ce texte est affiché dans « Sources ». `verificationLog` n’est pas affiché.
 
 `artistLatin` n’est plus un champ. S’il est encore présent, le validateur l’ignore et émet un avertissement de dépréciation (`clé dépréciée, ignorée`), sans échouer. L’artiste s’affiche en hangeul seul.
 

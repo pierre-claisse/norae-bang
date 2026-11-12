@@ -8,6 +8,8 @@ import { TOKEN_STORAGE_KEY } from "../src/token/storage";
 import fixture from "./fixtures/catalog.json";
 
 const TOKEN = "github_pat_fixture_not_a_real_token";
+const THIN = "\u202F";
+const RENDERED_CONTEXT = `Phrase de contexte factice, pour la fiche d\u2019exemple${THIN}: «${THIN}음음${THIN}», en quête de proie${THIN}?`;
 
 beforeEach(() => {
   at("/norae-bang/");
@@ -82,7 +84,7 @@ describe("application", () => {
       (element) => element.getAttribute("class") ?? element.tagName.toLowerCase(),
     );
     expect(bannerOrder).toEqual(["h1", "title-fr", "meta", "song-context"]);
-    expect(screen.getByText("Phrase de contexte factice, pour la fiche d\u2019exemple.")).toBeInTheDocument();
+    expect(document.querySelector(".song-context")?.textContent).toBe(RENDERED_CONTEXT);
     expect(screen.getByText(/Remarque de vérification factice/)).toBeInTheDocument();
     expect(screen.getByText(/가짜줄예시/)).toBeInTheDocument();
     expect(screen.getByText("Une seule ligne inventée.")).toBeInTheDocument();
@@ -143,7 +145,7 @@ describe("application", () => {
     render(<App deps={{ fetchImpl: mockCatalog(body) }} />);
     expect(await screen.findByRole("heading", { name: "Sources" })).toBeInTheDocument();
     expect(screen.getByText("Ancienne remarque factice.")).toBeInTheDocument();
-    expect(screen.queryByText("Phrase de contexte factice, pour la fiche d\u2019exemple.")).toBeNull();
+    expect(screen.queryByText(/Phrase de contexte factice/)).toBeNull();
     expect(spy).toHaveBeenCalledWith(expect.stringContaining("clé dépréciée"));
     spy.mockRestore();
   });
@@ -159,10 +161,48 @@ describe("application", () => {
     window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
     const spy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     render(<App deps={{ fetchImpl: mockCatalog(body) }} />);
-    expect(await screen.findByText("Phrase de contexte factice, pour la fiche d\u2019exemple.")).toBeInTheDocument();
+    expect(await screen.findByText(/Phrase de contexte factice/)).toBeInTheDocument();
+    expect(document.querySelector(".song-context")?.textContent).toBe(RENDERED_CONTEXT);
     expect(screen.queryByText("Ancienne remarque factice.")).toBeNull();
     expect(screen.queryByRole("heading", { name: "Sources" })).toBeNull();
     spy.mockRestore();
+  });
+
+  it("met en forme le français affiché et n’affiche pas verificationLog", async () => {
+    const body = structuredClone(fixture) as {
+      songs: Array<Record<string, unknown> & { units: Array<Record<string, unknown>> }>;
+    };
+    const secret = `JOURNAL-VERIFICATION-INVISIBLE-9f3a ${"détail ".repeat(40)}`;
+    const song = body.songs[0]!;
+    song.verificationLog = secret;
+    song.context = "Contexte d'exemple à 12:30 : «음음», en quête de proie?";
+    song.sourcesNote = "Source d'exemple : voir https://exemple.org/a?q=1 maintenant?";
+    song.units[0]!.fr = "Unité d'exemple ; «음음», en quête de proie?";
+    song.units[0]!.note = "jeu d'esprit : «음음», vraiment?";
+    song.units[0]!.variant = "édition d'exemple : «음음», vraiment?";
+    at("/norae-bang/chanson/chanson-exemple");
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    render(<App deps={{ fetchImpl: mockCatalog(body) }} />);
+    expect(await screen.findByRole("heading", { name: "예시 노래" })).toBeInTheDocument();
+    const unit = document.querySelector(".unit");
+    expect(unit?.querySelector(".unit-fr > p")?.textContent).toBe(
+      `Unité d\u2019exemple${THIN}; «${THIN}음음${THIN}», en quête de proie${THIN}?`,
+    );
+    expect(unit?.querySelector(".unit-note")?.textContent).toBe(
+      `Note${THIN}: jeu d\u2019esprit${THIN}: «${THIN}음음${THIN}», vraiment${THIN}?`,
+    );
+    expect(unit?.querySelector(".unit-variant")?.textContent).toBe(
+      `Variante${THIN}: édition d\u2019exemple${THIN}: «${THIN}음음${THIN}», vraiment${THIN}?`,
+    );
+    expect(document.querySelector(".song-context")?.textContent).toBe(
+      `Contexte d\u2019exemple à 12:30${THIN}: «${THIN}음음${THIN}», en quête de proie${THIN}?`,
+    );
+    expect(document.querySelector(".sources-note")?.textContent).toBe(
+      `Source d\u2019exemple${THIN}: voir https://exemple.org/a?q=1 maintenant${THIN}?`,
+    );
+    expect(document.body.textContent).not.toContain("JOURNAL-VERIFICATION-INVISIBLE-9f3a");
+    expect(document.body.innerHTML).not.toContain("JOURNAL-VERIFICATION-INVISIBLE-9f3a");
+    expect(document.title).not.toContain("JOURNAL-VERIFICATION-INVISIBLE-9f3a");
   });
 
   it("ouvre la fiche demandée par l’URL", async () => {
