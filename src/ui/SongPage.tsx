@@ -54,7 +54,7 @@ function SongDetail({ song }: { song: Song }) {
       <section className="lyrics-sheet" aria-labelledby="paroles">
         <h2 id="paroles">Paroles</h2>
         {song.lyricsStatus === "draft" && view === "lyrics" ? (
-          <p className="banner">Brouillon : ces paroles n’ont pas encore été vérifiées.</p>
+          <p className="banner">{frenchTypography("Brouillon : ces paroles n’ont pas encore été vérifiées.")}</p>
         ) : null}
         <LyricBody song={song} view={view} />
       </section>

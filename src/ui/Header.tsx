@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { frenchTypography } from "../domain/french";
 
 export function Header({ onForget, home }: { onForget: () => void; home: "link" | "text" }) {
   const mark = <span className="brand-mark">norae-bang</span>;
@@ -46,7 +47,7 @@ function TokenControl({ onForget }: { onForget: () => void }) {
             className="confirm"
             onMouseDown={(event) => event.stopPropagation()}
           >
-            <h2 id={titleId}>Oublier le jeton ?</h2>
+            <h2 id={titleId}>{frenchTypography("Oublier le jeton ?")}</h2>
             <p>Il sera effacé de ce navigateur. Vous pourrez en coller un autre ensuite.</p>
             <div className="confirm-actions">
               <button ref={cancelRef} type="button" className="secondary" onClick={() => setOpen(false)}>
