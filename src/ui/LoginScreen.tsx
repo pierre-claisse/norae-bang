@@ -45,9 +45,9 @@ export function LoginScreen({
             <li>
               Autorisez uniquement le dépôt{" "}
               <code className="repo">
-                pierre-claisse/
-                <wbr />
-                norae-bang-data
+                <span className="repo-part">pierre‑claisse</span>
+                /<wbr />
+                <span className="repo-part">norae‑bang‑data</span>
               </code>
               .
             </li>

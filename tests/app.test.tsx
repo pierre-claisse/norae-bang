@@ -31,7 +31,9 @@ describe("application", () => {
     expect(screen.getByRole("button", { name: "Afficher le jeton" })).toBeInTheDocument();
     expect(screen.getByLabelText("Jeton GitHub")).toHaveAttribute("placeholder", "github_pat_…");
     expect(screen.getByText(/reste dans ce navigateur/)).toBeInTheDocument();
-    expect(screen.getByText(/pierre-claisse\/norae-bang-data/)).toBeInTheDocument();
+    expect(screen.getByText("pierre‑claisse").textContent?.includes("\u2011")).toBe(true);
+    expect(screen.getByText("norae‑bang‑data").textContent?.includes("\u2011")).toBe(true);
+    expect(document.querySelector(".repo")?.textContent?.replace(/\s/g, "")).toBe("pierre‑claisse/norae‑bang‑data");
     expect(screen.getByText(/Contents/)).toBeInTheDocument();
     expect(screen.queryByRole("searchbox")).toBeNull();
     expect(screen.queryByText("Chanson exemple")).toBeNull();
@@ -74,6 +76,7 @@ describe("application", () => {
     expect(screen.getByText("Une seule ligne inventée.")).toBeInTheDocument();
     expect(screen.getByText(/premier couplet et finit au second/)).toBeInTheDocument();
     expect(screen.getByText(/Note :/)).toBeInTheDocument();
+    expect(document.querySelector(".stanza-mark")).toHaveAttribute("aria-hidden", "true");
     expect(screen.getByRole("link", { name: "Source exemple" })).toHaveAttribute(
       "href",
       "https://example.com/source-exemple",
