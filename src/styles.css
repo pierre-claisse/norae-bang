@@ -356,16 +356,40 @@ button.token-link:hover {
   gap: 0.35rem;
 }
 
+.artist-scroller {
+  position: relative;
+  max-width: 100%;
+  margin: 0.9rem 0 0;
+}
+
 .artist-row {
   display: flex;
   flex-wrap: nowrap;
   gap: 0.5rem;
   max-width: 100%;
-  margin: 0.9rem 0 0;
   padding: 0.15rem 0.1rem 0.45rem;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+}
+
+.artist-row::-webkit-scrollbar {
+  display: none;
+}
+
+.artist-fade {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 28px;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, #141210);
+}
+
+.artist-fade[data-more="true"] {
+  display: block;
 }
 
 .artist-chip {
@@ -389,7 +413,24 @@ button.token-link:hover {
 }
 
 .artist-count {
+  color: #b8ac98;
   font-variant-numeric: tabular-nums;
+}
+
+.artist-chip[aria-pressed="true"] .artist-count {
+  color: rgb(20 18 16 / 70%);
+}
+
+@media (min-width: 800px) {
+  .artist-row {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .artist-fade,
+  .artist-fade[data-more="true"] {
+    display: none;
+  }
 }
 
 .count {
