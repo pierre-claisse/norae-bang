@@ -381,11 +381,19 @@ button.token-link:hover {
   display: none;
   position: absolute;
   top: 0;
-  right: 0;
   bottom: 0;
   width: 28px;
   pointer-events: none;
+}
+
+.artist-fade-end {
+  right: 0;
   background: linear-gradient(to right, transparent, #141210);
+}
+
+.artist-fade-start {
+  left: 0;
+  background: linear-gradient(to right, #141210, transparent);
 }
 
 .artist-fade[data-more="true"] {
@@ -661,6 +669,7 @@ a.artist-link {
   border-radius: 0 8px 8px 0;
   font-size: 1.125rem;
   line-height: 1.5;
+  word-break: keep-all;
 }
 
 .unit-note {
