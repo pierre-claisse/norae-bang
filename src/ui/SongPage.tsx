@@ -130,15 +130,22 @@ function lineGroups(lines: readonly LyricLine[]) {
   }
   return (
     <div className="unit-lines">
-      {groups.map((group) => (
-        <div className="stanza" key={group[0]?.id}>
-          {group.map((line) => (
-            <p className="lyric-ko" lang="ko" key={line.id}>
-              {line.ko}
-            </p>
-          ))}
-        </div>
-      ))}
+      {groups.flatMap((group, index) => {
+        const stanza = (
+          <div className="stanza" key={group[0]?.id}>
+            {group.map((line) => (
+              <p className="lyric-ko" lang="ko" key={line.id}>
+                {line.ko}
+              </p>
+            ))}
+          </div>
+        );
+        if (index === 0 || !group[0]) return [stanza];
+        return [
+          <span className="stanza-mark" aria-hidden="true" key={`couplet-${group[0].id}`} />,
+          stanza,
+        ];
+      })}
     </div>
   );
 }
