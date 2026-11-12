@@ -35,15 +35,15 @@ function SongDetail({ song }: { song: Song }) {
             {song.titleFr}
           </p>
         ) : null}
+        <p className="meta">
+          <span lang="ko">{song.artist}</span>
+          {song.year !== null ? <span> · {song.year}</span> : null}
+        </p>
         {song.context ? (
           <p className="song-context" lang="fr">
             {song.context}
           </p>
         ) : null}
-        <p className="meta">
-          <span lang="ko">{song.artist}</span>
-          {song.year !== null ? <span> · {song.year}</span> : null}
-        </p>
       </header>
       <section className="lyrics-sheet" aria-labelledby="paroles">
         <h2 id="paroles">Paroles</h2>

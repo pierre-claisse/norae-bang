@@ -511,6 +511,14 @@ button.token-link:hover {
   margin-top: 1.5rem;
 }
 
+.song .sources {
+  margin-top: 48px;
+}
+
+.sources > h2 + * {
+  margin-top: 0.9rem;
+}
+
 .lyrics-sheet {
   padding: 0.2rem 0 0.4rem;
 }
