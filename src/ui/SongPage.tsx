@@ -1,4 +1,5 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import { artistListPath } from "../domain/filter";
 import type { LyricLine, LyricUnit, Song } from "../domain/schema";
 import { statusLabel } from "../domain/status";
 import { useDocumentTitle } from "./useDocumentTitle";
@@ -36,7 +37,9 @@ function SongDetail({ song }: { song: Song }) {
           </p>
         ) : null}
         <p className="meta">
-          <span lang="ko">{song.artist}</span>
+          <Link className="artist-link" lang="ko" to={artistListPath(song.artist)}>
+            {song.artist}
+          </Link>
           {song.year !== null ? <span> · {song.year}</span> : null}
         </p>
         {song.context ? (
@@ -81,9 +84,11 @@ function Sources({ song }: { song: Song }) {
 }
 
 function BackLink() {
+  const [params] = useSearchParams();
+  const artist = params.get("artiste");
   return (
     <p>
-      <Link className="back" to="/">
+      <Link className="back" to={artistListPath(artist && artist.trim() !== "" ? artist : null)}>
         <span aria-hidden="true">←</span>
         Retour au répertoire
       </Link>

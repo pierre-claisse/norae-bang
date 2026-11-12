@@ -27,7 +27,7 @@ L’API GitHub Contents ne renvoie pas un fichier de plus de 1 Mo. `songs.json` 
 | `spotifyTrackId` | chaîne ou `null` | `null`, ou 22 caractères `[A-Za-z0-9]` |
 | `title` | chaîne | titre en hangeul, non vide |
 | `titleFr` | chaîne ou `null` | titre français, non vide si présent |
-| `artist` | chaîne | hangeul, non vide. Seul nom affiché, dans la liste et sur la fiche |
+| `artist` | chaîne | hangeul, non vide. Seul nom affiché, dans la liste et sur la fiche. Identifie le chanteur ou le groupe : le filtre de la liste s’appuie sur cette chaîne, sans nom latin |
 | `year` | nombre ou `null` | `null`, ou entier de 1900 à 2100 |
 | `lyricsStatus` | chaîne | `missing`, `draft` ou `verified` |
 | `lines` | tableau | voir ci-dessous, peut être vide, dans l’ordre chanté |

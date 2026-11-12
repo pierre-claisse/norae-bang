@@ -213,6 +213,64 @@ describe("application", () => {
     expect(screen.queryByText(/Variante :/)).toBeNull();
   });
 
+  it("filtre par artiste, le combine à la recherche, et le conserve au retour", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    render(<App deps={{ fetchImpl: mockCatalog() }} />);
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+
+    const chips = [...document.querySelectorAll(".artist-chip")].map((chip) => chip.textContent);
+    expect(chips[0]).toBe("Tous");
+    expect(chips[1]).toContain("가수 예시");
+    expect(chips[1]).toContain("2");
+    expect(chips[2]).toContain("다른 가수");
+    expect(chips[3]).toContain("셋째 그룹");
+    expect(screen.getByRole("button", { name: "Tous" })).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(screen.getByRole("button", { name: /가수 예시, 2 chansons/ }));
+    expect(screen.getByRole("button", { name: /가수 예시, 2 chansons/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Tous" })).toHaveAttribute("aria-pressed", "false");
+    expect(new URLSearchParams(window.location.search).get("artiste")).toBe("가수 예시");
+    expect(screen.getByRole("link", { name: /Chanson exemple/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Seulement le hangeul/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Brouillon exemple/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Sans paroles/ })).toBeNull();
+    expect(screen.getByRole("link", { name: /Chanson exemple/ })).toHaveAttribute("href", expect.stringContaining("artiste="));
+
+    await user.type(screen.getByRole("searchbox", { name: "Rechercher" }), "hangeul");
+    expect(screen.queryByRole("link", { name: /Chanson exemple/ })).toBeNull();
+    expect(screen.getByRole("link", { name: /Seulement le hangeul/ })).toBeInTheDocument();
+    await user.clear(screen.getByRole("searchbox", { name: "Rechercher" }));
+
+    await user.click(screen.getByRole("link", { name: /Chanson exemple/ }));
+    expect(await screen.findByRole("heading", { name: "예시 노래" })).toBeInTheDocument();
+    const artistLink = screen.getByRole("link", { name: "가수 예시" });
+    expect(artistLink).toHaveAttribute("href", expect.stringContaining("artiste="));
+    expect(new URL(artistLink.getAttribute("href") ?? "", "http://localhost").searchParams.get("artiste")).toBe("가수 예시");
+    await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
+
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+    expect(new URLSearchParams(window.location.search).get("artiste")).toBe("가수 예시");
+    expect(screen.getByRole("button", { name: /가수 예시, 2 chansons/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("link", { name: /Brouillon exemple/ })).toBeNull();
+
+    await user.click(screen.getByRole("link", { name: /Chanson exemple/ }));
+    await user.click(await screen.findByRole("link", { name: "가수 예시" }));
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+    expect(new URLSearchParams(window.location.search).get("artiste")).toBe("가수 예시");
+    expect(screen.getByRole("link", { name: /Seulement le hangeul/ })).toBeInTheDocument();
+  });
+
+  it("ouvre une liste déjà filtrée par l’URL", async () => {
+    at(`/norae-bang/?artiste=${encodeURIComponent("셋째 그룹")}`);
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    render(<App deps={{ fetchImpl: mockCatalog() }} />);
+    expect(await screen.findByRole("link", { name: /Sans paroles/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Chanson exemple/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /셋째 그룹, 1 chanson/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Tous" })).toHaveAttribute("aria-pressed", "false");
+  });
+
   it("oublie un jeton stocké qui n’a pas le bon format", () => {
     window.localStorage.setItem(TOKEN_STORAGE_KEY, "pas-un-jeton");
     const fetchImpl = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response("non", { status: 500 }));
