@@ -1,4 +1,5 @@
 import { GitHubRequestError } from "../github/client";
+import { frenchTypography } from "./french";
 import { CatalogValidationError, parseCatalog, type Catalog } from "./schema";
 
 export const CATALOG_PATH = "songs.json";
@@ -20,7 +21,10 @@ export async function loadCatalog(source: TextFileSource, signal?: AbortSignal):
 }
 
 export function catalogErrorMessage(error: unknown): string {
-  if (error instanceof CatalogValidationError || error instanceof GitHubRequestError || error instanceof Error) {
+  if (error instanceof CatalogValidationError) {
+    return frenchTypography(error.message || "Lecture du répertoire impossible.");
+  }
+  if (error instanceof GitHubRequestError || error instanceof Error) {
     return error.message || "Lecture du répertoire impossible.";
   }
   return "Lecture du répertoire impossible.";

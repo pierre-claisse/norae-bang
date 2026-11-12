@@ -35,6 +35,9 @@ describe("application", () => {
     expect(screen.getByText("norae‑bang‑data").textContent?.includes("\u2011")).toBe(true);
     expect(document.querySelector(".repo")?.textContent?.replace(/\s/g, "")).toBe("pierre‑claisse/norae‑bang‑data");
     expect(screen.getByText(/Contents/)).toBeInTheDocument();
+    expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toContain(
+      "Permission\u202F: Contents, en lecture seule.",
+    );
     expect(screen.queryByRole("searchbox")).toBeNull();
     expect(screen.queryByText("Chanson exemple")).toBeNull();
     expect(fetchImpl).not.toHaveBeenCalled();
@@ -114,7 +117,7 @@ describe("application", () => {
     expect(await screen.findByText("Les paroles de cette chanson ne sont pas encore disponibles.")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Jeton" }));
-    expect(screen.getByRole("dialog", { name: "Oublier le jeton ?" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Oublier le jeton\u202F?" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Annuler" }));
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBe(TOKEN);
@@ -176,8 +179,21 @@ describe("application", () => {
   it("affiche les erreurs de schéma sans liste partielle", async () => {
     window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
     render(<App deps={{ fetchImpl: mockCatalog({ schemaVersion: 2 }) }} />);
-    expect(await screen.findByRole("alert")).toHaveTextContent(/schemaVersion/);
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/schemaVersion/);
+    expect(alert.textContent).toContain("schemaVersion\u202F:");
     expect(screen.queryByText("Chanson exemple")).toBeNull();
+  });
+
+  it("affiche l’avis brouillon avec une espace fine insécable avant les deux-points", async () => {
+    at("/norae-bang/chanson/brouillon-exemple");
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    render(<App deps={{ fetchImpl: mockCatalog() }} />);
+    const notice = await screen.findByText(/pas encore été vérifiées/);
+    const text = notice.textContent ?? "";
+    const colon = text.indexOf(":");
+    expect(colon).toBeGreaterThan(0);
+    expect(text.charCodeAt(colon - 1)).toBe(0x202f);
   });
 
   it("explique un JSON invalide et un jeton refusé", async () => {

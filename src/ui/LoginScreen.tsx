@@ -1,4 +1,5 @@
 import { useId, useState, type FormEvent } from "react";
+import { frenchTypography } from "../domain/french";
 import { useToken } from "../token/TokenProvider";
 import { useDocumentTitle } from "./useDocumentTitle";
 
@@ -52,7 +53,7 @@ export function LoginScreen({
               .
             </li>
             <li>
-              Permission : <strong>Contents</strong>, en lecture seule.
+              {frenchTypography("Permission : ")}<strong>Contents</strong>, en lecture seule.
             </li>
           </ol>
           <label htmlFor="token">Jeton GitHub</label>
