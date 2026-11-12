@@ -266,18 +266,15 @@ button.clear-search {
 }
 
 .hint,
-.lede,
 .meta,
 .count,
-.colophon,
 .unit-note,
 .unit-variant,
 .sources-note {
   color: var(--muted);
 }
 
-.hint,
-.colophon {
+.hint {
   font-size: 0.92rem;
 }
 
@@ -345,10 +342,6 @@ button.token-link:hover {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.5rem;
-}
-
-.lede {
-  margin: 0.35rem 0 1rem;
 }
 
 .search {
@@ -697,12 +690,6 @@ a.artist-link {
 
 .sources a {
   overflow-wrap: anywhere;
-}
-
-.colophon {
-  width: min(100% - 2rem, 60rem);
-  margin: 0 auto;
-  padding: 0 0 calc(1.5rem + env(safe-area-inset-bottom));
 }
 
 @media (max-width: 700px) {
