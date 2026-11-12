@@ -34,17 +34,30 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
           {filtered.map((song) => (
             <li key={song.id}>
               <Link to={`/chanson/${song.id}`} className="song-card">
-                <span className="song-heading">
-                  <span className="song-title" lang="ko">
-                    {song.title}
+                <span className="song-body">
+                  <span className="song-heading">
+                    <span className="title-line">
+                      <span className="song-title" lang="ko">
+                        {song.title}
+                      </span>
+                      {song.titleRomanized ? <span className="romanized">{song.titleRomanized}</span> : null}
+                    </span>
+                    <span className="badge" data-status={song.lyricsStatus}>
+                      {statusLabel(song.lyricsStatus)}
+                    </span>
                   </span>
-                  <span className="badge" data-status={song.lyricsStatus}>
-                    {statusLabel(song.lyricsStatus)}
+                  {song.titleFr ? (
+                    <span className="title-fr" lang="fr">
+                      {song.titleFr}
+                    </span>
+                  ) : null}
+                  <span className="meta">
+                    <span lang="ko">{song.artist}</span>
+                    {song.artistRomanized ? <span> ({song.artistRomanized})</span> : null}
+                    {song.year !== null ? <span> · {song.year}</span> : null}
                   </span>
                 </span>
-                {song.titleRomanized ? <span className="romanized">{song.titleRomanized}</span> : null}
-                {song.titleFr ? <span className="title-fr">{song.titleFr}</span> : null}
-                <span className="meta">{formatArtist(song, song.year)}</span>
+                <Chevron />
               </Link>
             </li>
           ))}
@@ -54,9 +67,12 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
   );
 }
 
-function formatArtist(song: Song, year: number | null): string {
-  const artist = song.artistRomanized ? `${song.artist} (${song.artistRomanized})` : song.artist;
-  return year === null ? artist : `${artist} · ${year}`;
+function Chevron() {
+  return (
+    <svg className="chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M9 6.5 15 12l-6 5.5" />
+    </svg>
+  );
 }
 
 function countLabel(count: number): string {

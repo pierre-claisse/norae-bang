@@ -10,7 +10,7 @@ Lecture seule de `songs.json` à la racine du dépôt privé `pierre-claisse/nor
 
 L’appel envoie `Authorization: Bearer`, `Accept: application/vnd.github+json`, `cache: no-store`, `credentials: omit`, `redirect: error`. Le client n’a pas de méthode d’écriture. `User-Agent` n’est pas fixé : c’est un en-tête interdit dans un navigateur, qui fournit déjà le sien.
 
-Le jeton est un PAT fine-grained collé par l’utilisateur (`github_pat_…`). Il est stocké dans `localStorage` sous la clé `norae-bang.token`. Le bouton « Oublier ou remplacer le jeton » l’efface et ramène à l’écran de connexion. Un jeton au mauvais format est effacé sans appel réseau.
+Le jeton est un PAT fine-grained collé par l’utilisateur (`github_pat_…`). Il est stocké dans `localStorage` sous la clé `norae-bang.token`. Le lien « Jeton » ouvre une confirmation avant de l’effacer et de revenir à l’écran de connexion. Un jeton au mauvais format est effacé sans appel réseau. Les bascules « Romanisation » et « Traduction » sont mémorisées dans `norae-bang.show-romanization` et `norae-bang.show-translation`.
 
 Sans jeton valide, l’arbre React s’arrête à l’écran de connexion : pas de route, pas de requête. `npm run check-dist` refuse un jeton ou la fixture de test dans `dist/`.
 
