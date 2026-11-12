@@ -1,5 +1,6 @@
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { artistListPath } from "../domain/filter";
+import { frenchTypography } from "../domain/french";
 import type { LyricLine, LyricUnit, Song } from "../domain/schema";
 import { statusLabel } from "../domain/status";
 import { useDocumentTitle } from "./useDocumentTitle";
@@ -7,7 +8,9 @@ import { useDocumentTitle } from "./useDocumentTitle";
 export function SongPage({ songs }: { songs: readonly Song[] }) {
   const { songId } = useParams();
   const song = songs.find((item) => item.id === songId);
-  useDocumentTitle(song ? `${song.titleFr ?? song.title} · norae-bang` : "Chanson introuvable · norae-bang");
+  useDocumentTitle(
+    song ? `${song.titleFr ? frenchTypography(song.titleFr) : song.title} · norae-bang` : "Chanson introuvable · norae-bang",
+  );
   if (!song) {
     return (
       <>
@@ -33,7 +36,7 @@ function SongDetail({ song }: { song: Song }) {
         </div>
         {song.titleFr ? (
           <p className="title-fr" lang="fr">
-            {song.titleFr}
+            {frenchTypography(song.titleFr)}
           </p>
         ) : null}
         <p className="meta">
@@ -44,7 +47,7 @@ function SongDetail({ song }: { song: Song }) {
         </p>
         {song.context ? (
           <p className="song-context" lang="fr">
-            {song.context}
+            {frenchTypography(song.context)}
           </p>
         ) : null}
       </header>
@@ -67,13 +70,13 @@ function Sources({ song }: { song: Song }) {
   return (
     <section className="sources" aria-labelledby="sources-titre">
       <h2 id="sources-titre">Sources</h2>
-      {note ? <p className="sources-note">{note}</p> : null}
+      {note ? <p className="sources-note">{frenchTypography(note)}</p> : null}
       {song.sources.length > 0 ? (
         <ul>
           {song.sources.map((source) => (
             <li key={`${source.label}-${source.url}`}>
               <a href={source.url} target="_blank" rel="noreferrer">
-                {source.label}
+                {frenchTypography(source.label)}
               </a>
             </li>
           ))}
@@ -127,9 +130,9 @@ function Units({ lines, units }: { lines: readonly LyricLine[]; units: readonly 
           <article className="unit" key={`${unit.from}-${unit.to}`}>
             {lineGroups(slice)}
             <div className="unit-fr" lang="fr">
-              <p>{unit.fr}</p>
-              {unit.note ? <p className="unit-note">Note : {unit.note}</p> : null}
-              {unit.variant ? <p className="unit-variant">Variante : {unit.variant}</p> : null}
+              <p>{frenchTypography(unit.fr)}</p>
+              {unit.note ? <p className="unit-note">{frenchTypography(`Note : ${unit.note}`)}</p> : null}
+              {unit.variant ? <p className="unit-variant">{frenchTypography(`Variante : ${unit.variant}`)}</p> : null}
             </div>
           </article>
         );

@@ -87,12 +87,13 @@ describe("application", () => {
     expect(screen.getByText(/가짜줄예시/)).toBeInTheDocument();
     expect(screen.getByText("Une seule ligne inventée.")).toBeInTheDocument();
     expect(screen.getByText(/premier couplet et finit au second/)).toBeInTheDocument();
-    expect(screen.getByText(/Note :/)).toBeInTheDocument();
     const noted = screen.getByText(/Jeu de mots inventé pour la fixture\./).closest(".unit");
     const note = noted?.querySelector(".unit-note");
     const variant = noted?.querySelector(".unit-variant");
-    expect(note?.textContent).toBe("Note : Jeu de mots inventé pour la fixture.");
-    expect(variant?.textContent).toBe("Variante : Une édition inventée écrit « 다다 » au lieu de « 마마 ».");
+    expect(note?.textContent).toBe("Note\u202F: Jeu de mots inventé pour la fixture.");
+    expect(variant?.textContent).toBe(
+      "Variante\u202F: Une édition inventée écrit «\u202F다다\u202F» au lieu de «\u202F마마\u202F».",
+    );
     expect(note && variant && Boolean(note.compareDocumentPosition(variant) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
     expect(document.querySelectorAll(".unit-variant")).toHaveLength(1);
     expect(document.querySelector(".stanza-mark")).toHaveAttribute("aria-hidden", "true");
@@ -105,7 +106,7 @@ describe("application", () => {
     await user.click(await screen.findByRole("link", { name: /Brouillon exemple/ }));
     expect(await screen.findByText("Brouillon d'une ligne inventée.")).toBeInTheDocument();
     expect(screen.getByText(/pas encore été vérifiées/)).toBeInTheDocument();
-    expect(screen.queryByText(/Variante :/)).toBeNull();
+    expect(screen.queryByText(/Variante\u202F:/)).toBeNull();
     expect(screen.queryByRole("heading", { name: "Sources" })).toBeNull();
 
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
@@ -209,8 +210,8 @@ describe("application", () => {
     expect(screen.queryByText(/traduire/i)).toBeNull();
     expect(screen.queryByRole("button", { name: "Traduction" })).toBeNull();
     expect(screen.queryByText("Une seule ligne inventée.")).toBeNull();
-    expect(screen.queryByText(/Note :/)).toBeNull();
-    expect(screen.queryByText(/Variante :/)).toBeNull();
+    expect(screen.queryByText(/Note\u202F:/)).toBeNull();
+    expect(screen.queryByText(/Variante\u202F:/)).toBeNull();
   });
 
   it("filtre par artiste, le combine à la recherche, et le conserve au retour", async () => {
@@ -231,6 +232,7 @@ describe("application", () => {
     expect(screen.getByRole("button", { name: /가수 예시, 2 chansons/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Tous" })).toHaveAttribute("aria-pressed", "false");
     expect(new URLSearchParams(window.location.search).get("artiste")).toBe("가수 예시");
+    expect(document.querySelector(".count")?.textContent).toBe("2 chansons · 가수 예시");
     expect(screen.getByRole("link", { name: /Chanson exemple/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Seulement le hangeul/ })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Brouillon exemple/ })).toBeNull();
@@ -261,7 +263,8 @@ describe("application", () => {
     expect(screen.getByRole("link", { name: /Seulement le hangeul/ })).toBeInTheDocument();
   });
 
-  it("ouvre une liste déjà filtrée par l’URL", async () => {
+  it("ouvre une liste déjà filtrée par l’URL et centre la puce", async () => {
+    const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => undefined);
     at(`/norae-bang/?artiste=${encodeURIComponent("셋째 그룹")}`);
     window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
     render(<App deps={{ fetchImpl: mockCatalog() }} />);
@@ -269,6 +272,9 @@ describe("application", () => {
     expect(screen.queryByRole("link", { name: /Chanson exemple/ })).toBeNull();
     expect(screen.getByRole("button", { name: /셋째 그룹, 1 chanson/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Tous" })).toHaveAttribute("aria-pressed", "false");
+    expect(document.querySelector(".count")?.textContent).toBe("1 chanson · 셋째 그룹");
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest", inline: "center" });
+    scrollIntoView.mockRestore();
   });
 
   it("oublie un jeton stocké qui n’a pas le bon format", () => {

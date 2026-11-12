@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { artistChoices, artistQuery, filterSongs } from "../domain/filter";
+import { frenchTypography } from "../domain/french";
 import type { Song } from "../domain/schema";
 import { statusLabel } from "../domain/status";
 import { useDocumentTitle } from "./useDocumentTitle";
@@ -14,6 +15,35 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
   const filtered = useMemo(() => filterSongs(songs, query, artist), [songs, query, artist]);
   useDocumentTitle("Répertoire · norae-bang");
   const searching = query.trim().length > 0;
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState(false);
+
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    if (artist) {
+      const chip = row.querySelector<HTMLElement>(".artist-chip[aria-pressed='true']");
+      chip?.scrollIntoView({ block: "nearest", inline: "center" });
+    }
+    const update = () => {
+      const last = row.lastElementChild;
+      if (!last) {
+        setMore(false);
+        return;
+      }
+      const rowBox = row.getBoundingClientRect();
+      const lastBox = last.getBoundingClientRect();
+      setMore(lastBox.right > rowBox.right + 1);
+    };
+    update();
+    row.addEventListener("scroll", update, { passive: true });
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
+    observer?.observe(row);
+    return () => {
+      row.removeEventListener("scroll", update);
+      observer?.disconnect();
+    };
+  }, [artist, artists]);
 
   function chooseArtist(next: string | null) {
     const updated = new URLSearchParams(params);
@@ -43,28 +73,37 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
           ) : null}
         </div>
       </div>
-      <div className="artist-row" role="group" aria-label="Filtrer par artiste">
-        <button type="button" className="artist-chip" aria-pressed={artist === null} onClick={() => chooseArtist(null)}>
-          Tous
-        </button>
-        {artists.map((choice) => (
-          <button
-            key={choice.name}
-            type="button"
-            className="artist-chip"
-            lang="ko"
-            aria-pressed={artist === choice.name}
-            aria-label={artistChipLabel(choice.name, choice.count)}
-            onClick={() => chooseArtist(choice.name)}
-          >
-            <span>{choice.name}</span>
-            <span className="artist-count">{choice.count}</span>
+      <div className="artist-scroller">
+        <div className="artist-row" role="group" aria-label="Filtrer par artiste" ref={rowRef}>
+          <button type="button" className="artist-chip" aria-pressed={artist === null} onClick={() => chooseArtist(null)}>
+            Tous
           </button>
-        ))}
+          {artists.map((choice) => (
+            <button
+              key={choice.name}
+              type="button"
+              className="artist-chip"
+              lang="ko"
+              aria-pressed={artist === choice.name}
+              aria-label={artistChipLabel(choice.name, choice.count)}
+              onClick={() => chooseArtist(choice.name)}
+            >
+              <span>{choice.name}</span>
+              <span className="artist-count">{choice.count}</span>
+            </button>
+          ))}
+        </div>
+        <span className="artist-fade" data-more={more ? "true" : "false"} aria-hidden="true" />
       </div>
       {filtered.length > 0 ? (
         <p className="count" aria-live="polite">
-          {countLabel(filtered.length)}
+          <span>{countLabel(filtered.length)}</span>
+          {artist ? (
+            <>
+              <span> · </span>
+              <span lang="ko">{artist}</span>
+            </>
+          ) : null}
         </p>
       ) : (
         <p className="count" aria-live="polite">
@@ -92,7 +131,7 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
                   </span>
                   {song.titleFr ? (
                     <span className="title-fr" lang="fr">
-                      {song.titleFr}
+                      {frenchTypography(song.titleFr)}
                     </span>
                   ) : null}
                   <span className="meta">
