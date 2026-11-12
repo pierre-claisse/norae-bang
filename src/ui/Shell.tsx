@@ -11,7 +11,6 @@ export function Shell({ onForget }: { onForget: () => void }) {
       <main id="contenu" className="wrap" tabIndex={-1}>
         <Outlet />
       </main>
-      <footer className="colophon">Lecture seule. Les paroles et les traductions viennent du dépôt privé.</footer>
     </>
   );
 }

@@ -61,7 +61,6 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
   return (
     <>
       <h1>Répertoire</h1>
-      <p className="lede">Chansons coréennes, paroles vérifiées, traduction française.</p>
       <div className="search">
         <label htmlFor="recherche">Rechercher</label>
         <div className="search-field">
