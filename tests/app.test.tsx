@@ -77,6 +77,11 @@ describe("application", () => {
     expect(await screen.findByRole("heading", { name: "예시 노래" })).toBeInTheDocument();
     expect(document.querySelector(".song .meta")?.textContent).toBe("가수 예시 · 2020");
     expect(screen.queryByText("Artiste exemple")).toBeNull();
+    expect(screen.queryByText(/\([^)]*exemple\)/)).toBeNull();
+    const bannerOrder = [...document.querySelectorAll(".song-banner h1, .song-banner .title-fr, .song-banner .meta, .song-banner .song-context")].map(
+      (element) => element.getAttribute("class") ?? element.tagName.toLowerCase(),
+    );
+    expect(bannerOrder).toEqual(["h1", "title-fr", "meta", "song-context"]);
     expect(screen.getByText("Phrase de contexte factice, pour la fiche d'exemple.")).toBeInTheDocument();
     expect(screen.getByText(/Remarque de vérification factice/)).toBeInTheDocument();
     expect(screen.getByText(/가짜줄예시/)).toBeInTheDocument();
