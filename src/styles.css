@@ -271,6 +271,7 @@ button.clear-search {
 .count,
 .colophon,
 .unit-note,
+.unit-variant,
 .sources-note {
   color: var(--muted);
 }
@@ -584,6 +585,11 @@ button.token-link:hover {
 .unit-note {
   margin-top: 0.45rem;
   font-size: 0.9375rem;
+}
+
+.unit-variant {
+  margin-top: 0.35rem;
+  font-size: 0.875rem;
 }
 
 .plain-lyrics {

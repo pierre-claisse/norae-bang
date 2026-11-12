@@ -88,6 +88,13 @@ describe("application", () => {
     expect(screen.getByText("Une seule ligne inventée.")).toBeInTheDocument();
     expect(screen.getByText(/premier couplet et finit au second/)).toBeInTheDocument();
     expect(screen.getByText(/Note :/)).toBeInTheDocument();
+    const noted = screen.getByText(/Jeu de mots inventé pour la fixture\./).closest(".unit");
+    const note = noted?.querySelector(".unit-note");
+    const variant = noted?.querySelector(".unit-variant");
+    expect(note?.textContent).toBe("Note : Jeu de mots inventé pour la fixture.");
+    expect(variant?.textContent).toBe("Variante : Une édition inventée écrit « 다다 » au lieu de « 마마 ».");
+    expect(note && variant && Boolean(note.compareDocumentPosition(variant) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+    expect(document.querySelectorAll(".unit-variant")).toHaveLength(1);
     expect(document.querySelector(".stanza-mark")).toHaveAttribute("aria-hidden", "true");
     expect(screen.getByRole("link", { name: "Source exemple" })).toHaveAttribute(
       "href",
@@ -98,6 +105,7 @@ describe("application", () => {
     await user.click(await screen.findByRole("link", { name: /Brouillon exemple/ }));
     expect(await screen.findByText("Brouillon d'une ligne inventée.")).toBeInTheDocument();
     expect(screen.getByText(/pas encore été vérifiées/)).toBeInTheDocument();
+    expect(screen.queryByText(/Variante :/)).toBeNull();
     expect(screen.queryByRole("heading", { name: "Sources" })).toBeNull();
 
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
@@ -202,6 +210,7 @@ describe("application", () => {
     expect(screen.queryByRole("button", { name: "Traduction" })).toBeNull();
     expect(screen.queryByText("Une seule ligne inventée.")).toBeNull();
     expect(screen.queryByText(/Note :/)).toBeNull();
+    expect(screen.queryByText(/Variante :/)).toBeNull();
   });
 
   it("oublie un jeton stocké qui n’a pas le bon format", () => {
