@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "playlist": {
+    "spotifyId": "47pICnNxleDOtiYrOcEeiM",
+    "name": "norae-bang"
+  },
+  "songs": [
+    {
+      "id": "chanson-exemple",
+      "spotifyTrackId": null,
+      "title": "예시 노래",
+      "titleRomanized": "Yesi norae",
+      "titleFr": "Chanson exemple",
+      "artist": "가수 예시",
+      "artistRomanized": "Artiste exemple",
+      "year": 2020,
+      "lyricsStatus": "verified",
+      "lines": [
+        { "ko": "예시 가사", "romanized": "Yesi gasa", "fr": "Parole exemple" },
+        { "ko": "둘째 줄", "romanized": "Duljjae jul", "fr": "Deuxième ligne exemple" }
+      ],
+      "sources": [{ "label": "Source exemple", "url": "https://example.com/source-exemple" }],
+      "notes": "Fixture factice, sans rapport avec une œuvre réelle."
+    },
+    {
+      "id": "brouillon-exemple",
+      "spotifyTrackId": null,
+      "title": "초고 노래",
+      "titleRomanized": "Chogo norae",
+      "titleFr": "Brouillon exemple",
+      "artist": "가수 예시",
+      "artistRomanized": "Artiste exemple",
+      "year": null,
+      "lyricsStatus": "draft",
+      "lines": [{ "ko": "미완성", "romanized": null, "fr": null }],
+      "sources": [],
+      "notes": null
+    },
+    {
+      "id": "sans-paroles",
+      "spotifyTrackId": null,
+      "title": "빈 노래",
+      "titleRomanized": "Bin norae",
+      "titleFr": "Sans paroles",
+      "artist": "가수 예시",
+      "artistRomanized": null,
+      "year": null,
+      "lyricsStatus": "missing",
+      "lines": [],
+      "sources": [],
+      "notes": null
+    }
+  ]
+}
