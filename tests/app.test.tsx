@@ -73,6 +73,9 @@ describe("application", () => {
 
     await user.click(screen.getByRole("link", { name: /Chanson exemple/ }));
     expect(await screen.findByRole("heading", { name: "예시 노래" })).toBeInTheDocument();
+    expect(screen.getByText("Phrase de contexte factice, pour la fiche d'exemple.")).toBeInTheDocument();
+    expect(screen.getByText(/Remarque de vérification factice/)).toBeInTheDocument();
+    expect(screen.getByText(/가짜줄예시/)).toBeInTheDocument();
     expect(screen.getByText("Une seule ligne inventée.")).toBeInTheDocument();
     expect(screen.getByText(/premier couplet et finit au second/)).toBeInTheDocument();
     expect(screen.getByText(/Note :/)).toBeInTheDocument();
@@ -86,7 +89,7 @@ describe("application", () => {
     await user.click(await screen.findByRole("link", { name: /Brouillon exemple/ }));
     expect(await screen.findByText("Brouillon d'une ligne inventée.")).toBeInTheDocument();
     expect(screen.getByText(/pas encore été vérifiées/)).toBeInTheDocument();
-    expect(screen.getByText("Aucune source indiquée.")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Sources" })).toBeNull();
 
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
     await user.click(await screen.findByRole("link", { name: /Sans paroles/ }));
@@ -106,6 +109,42 @@ describe("application", () => {
     const url = String(fetchImpl.mock.calls[0]?.[0]);
     expect(url).toBe("https://api.github.com/repos/pierre-claisse/norae-bang-data/contents/songs.json?ref=main");
     expect(url).not.toContain(TOKEN);
+  });
+
+  it("affiche notes dans Sources quand context et sourcesNote manquent", async () => {
+    const body = structuredClone(fixture) as {
+      songs: Array<Record<string, unknown>>;
+    };
+    const song = body.songs[0]!;
+    delete song.context;
+    delete song.sourcesNote;
+    song.notes = "Ancienne remarque factice.";
+    at("/norae-bang/chanson/chanson-exemple");
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    render(<App deps={{ fetchImpl: mockCatalog(body) }} />);
+    expect(await screen.findByRole("heading", { name: "Sources" })).toBeInTheDocument();
+    expect(screen.getByText("Ancienne remarque factice.")).toBeInTheDocument();
+    expect(screen.queryByText("Phrase de contexte factice, pour la fiche d'exemple.")).toBeNull();
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining("clé dépréciée"));
+    spy.mockRestore();
+  });
+
+  it("n’affiche pas notes dans Sources quand le contexte est renseigné", async () => {
+    const body = structuredClone(fixture) as {
+      songs: Array<Record<string, unknown>>;
+    };
+    body.songs[0]!.notes = "Ancienne remarque factice.";
+    body.songs[0]!.sources = [];
+    body.songs[0]!.sourcesNote = null;
+    at("/norae-bang/chanson/chanson-exemple");
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    render(<App deps={{ fetchImpl: mockCatalog(body) }} />);
+    expect(await screen.findByText("Phrase de contexte factice, pour la fiche d'exemple.")).toBeInTheDocument();
+    expect(screen.queryByText("Ancienne remarque factice.")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Sources" })).toBeNull();
+    spy.mockRestore();
   });
 
   it("ouvre la fiche demandée par l’URL", async () => {

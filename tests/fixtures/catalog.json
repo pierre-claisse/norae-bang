@@ -15,7 +15,11 @@
       "year": 2020,
       "lyricsStatus": "verified",
       "lines": [
-        { "id": "l1", "stanza": 1, "ko": "라라 가가 나나" },
+        {
+          "id": "l1",
+          "stanza": 1,
+          "ko": "라라 가가 나나 다다 마마 바바 사사 아아 자자 차차 카카 타타 파파 하하 거거 너너 더더 러러 머머 버버 서서 어어 저저 처처 커커 터터 퍼퍼 허허 가짜줄예시 자리표시문장이어짐끝없이한줄로만적힌예시"
+        },
         { "id": "l2", "stanza": 1, "ko": "다다 마마 바바" },
         { "id": "l3", "stanza": 1, "ko": "사사 아아 자자" },
         { "id": "l4", "stanza": 1, "ko": "차차 카카 타타" },
@@ -48,7 +52,8 @@
         }
       ],
       "sources": [{ "label": "Source exemple", "url": "https://example.com/source-exemple" }],
-      "notes": "Fixture factice, sans rapport avec une œuvre réelle."
+      "context": "Phrase de contexte factice, pour la fiche d'exemple.",
+      "sourcesNote": "Remarque de vérification factice : plateformes, variantes et dates inventées."
     },
     {
       "id": "sans-traduction",
@@ -65,7 +70,8 @@
       ],
       "units": [],
       "sources": [],
-      "notes": null
+      "context": null,
+      "sourcesNote": null
     },
     {
       "id": "brouillon-exemple",
@@ -79,7 +85,8 @@
       "lines": [{ "id": "b1", "stanza": 1, "ko": "미완성 예시" }],
       "units": [{ "from": "b1", "to": "b1", "fr": "Brouillon d'une ligne inventée.", "note": null }],
       "sources": [],
-      "notes": null
+      "context": null,
+      "sourcesNote": null
     },
     {
       "id": "sans-paroles",
@@ -93,7 +100,8 @@
       "lines": [],
       "units": [],
       "sources": [],
-      "notes": null
+      "context": null,
+      "sourcesNote": null
     }
   ]
 }

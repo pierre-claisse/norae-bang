@@ -1,11 +1,14 @@
-import { describe, expect, it } from "vitest";
-import { CatalogValidationError, parseCatalog, type Catalog } from "../src/domain/schema";
+import { describe, expect, it, vi } from "vitest";
+import { CatalogValidationError, parseCatalog, readCatalog, type Catalog } from "../src/domain/schema";
 import fixture from "./fixtures/catalog.json";
 
 const catalog = fixture as Catalog;
 
 describe("schéma songs.json", () => {
   it("accepte la fixture factice", () => {
+    const read = readCatalog(catalog);
+    expect(read.warnings).toEqual([]);
+    expect(read.catalog).toEqual(catalog);
     expect(parseCatalog(catalog)).toEqual(catalog);
   });
 
@@ -68,10 +71,15 @@ describe("schéma songs.json", () => {
       name: "refuse un champ nullable omis",
       change: (copy) => {
         const song = { ...copy.songs[0] } as Partial<Catalog["songs"][number]>;
-        delete song.notes;
+        delete song.context;
         return { ...copy, songs: [song] };
       },
-      fragment: "notes : clé absente",
+      fragment: "context : clé absente",
+    },
+    {
+      name: "refuse un contexte de plus de 200 caractères",
+      change: (copy) => ({ ...copy, songs: [{ ...copy.songs[0], context: "가".repeat(201) }] }),
+      fragment: "200 caractères",
     },
     {
       name: "refuse un statut inconnu",
@@ -153,6 +161,38 @@ describe("schéma songs.json", () => {
     const copy = structuredClone(catalog);
     copy.songs = [{ ...copy.songs[0]!, titleRomanized: "non" } as Catalog["songs"][number]];
     expect(issues(copy).some((issue) => issue.includes("titleRomanized"))).toBe(true);
+  });
+
+  it("accepte un contexte de 200 caractères", () => {
+    const copy = structuredClone(catalog);
+    copy.songs = [{ ...copy.songs[0]!, context: "가".repeat(200) }];
+    expect(parseCatalog(copy).songs[0]?.context).toHaveLength(200);
+  });
+
+  it("accepte notes avec un avertissement de dépréciation", () => {
+    const song = { ...catalog.songs[0]! } as Partial<Catalog["songs"][number]>;
+    delete song.context;
+    delete song.sourcesNote;
+    song.notes = "Ancienne remarque factice.";
+    const read = readCatalog({ ...catalog, songs: [song] });
+    expect(read.warnings).toEqual(["songs[0].notes : clé dépréciée, utiliser context et sourcesNote."]);
+    expect(read.catalog.songs[0]?.context).toBeNull();
+    expect(read.catalog.songs[0]?.sourcesNote).toBeNull();
+    expect(read.catalog.songs[0]?.notes).toBe("Ancienne remarque factice.");
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    expect(parseCatalog({ ...catalog, songs: [song] }).songs[0]?.notes).toBe("Ancienne remarque factice.");
+    expect(spy).toHaveBeenCalledWith("songs[0].notes : clé dépréciée, utiliser context et sourcesNote.");
+    spy.mockRestore();
+  });
+
+  it("avertit aussi quand notes accompagne context et sourcesNote", () => {
+    const copy = structuredClone(catalog);
+    copy.songs = [{ ...copy.songs[0]!, notes: "Ancienne remarque factice." }];
+    const read = readCatalog(copy);
+    expect(read.warnings).toEqual(["songs[0].notes : clé dépréciée, utiliser context et sourcesNote."]);
+    expect(read.catalog.songs[0]?.context).toBe("Phrase de contexte factice, pour la fiche d'exemple.");
+    expect(read.catalog.songs[0]?.sourcesNote).toContain("Remarque de vérification factice");
+    expect(read.catalog.songs[0]?.notes).toBe("Ancienne remarque factice.");
   });
 
   it("accepte un identifiant Spotify et une URL http", () => {

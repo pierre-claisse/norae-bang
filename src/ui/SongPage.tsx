@@ -35,12 +35,16 @@ function SongDetail({ song }: { song: Song }) {
             {song.titleFr}
           </p>
         ) : null}
+        {song.context ? (
+          <p className="song-context" lang="fr">
+            {song.context}
+          </p>
+        ) : null}
         <p className="meta">
           <span lang="ko">{song.artist}</span>
           {song.artistLatin ? <span> ({song.artistLatin})</span> : null}
           {song.year !== null ? <span> · {song.year}</span> : null}
         </p>
-        {song.notes ? <p className="notes">{song.notes}</p> : null}
       </header>
       <section className="lyrics-sheet" aria-labelledby="paroles">
         <h2 id="paroles">Paroles</h2>
@@ -49,23 +53,31 @@ function SongDetail({ song }: { song: Song }) {
         ) : null}
         <LyricBody song={song} view={view} />
       </section>
-      <section className="sources" aria-labelledby="sources-titre">
-        <h2 id="sources-titre">Sources</h2>
-        {song.sources.length === 0 ? (
-          <p>Aucune source indiquée.</p>
-        ) : (
-          <ul>
-            {song.sources.map((source) => (
-              <li key={`${source.label}-${source.url}`}>
-                <a href={source.url} target="_blank" rel="noreferrer">
-                  {source.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <Sources song={song} />
     </article>
+  );
+}
+
+function Sources({ song }: { song: Song }) {
+  const legacyNotes = song.context == null && song.sourcesNote == null ? (song.notes ?? null) : null;
+  const note = song.sourcesNote ?? legacyNotes;
+  if (!note && song.sources.length === 0) return null;
+  return (
+    <section className="sources" aria-labelledby="sources-titre">
+      <h2 id="sources-titre">Sources</h2>
+      {note ? <p className="sources-note">{note}</p> : null}
+      {song.sources.length > 0 ? (
+        <ul>
+          {song.sources.map((source) => (
+            <li key={`${source.label}-${source.url}`}>
+              <a href={source.url} target="_blank" rel="noreferrer">
+                {source.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
   );
 }
 

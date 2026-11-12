@@ -21,6 +21,8 @@ const SONG_KEYS = [
   "lines",
   "units",
   "sources",
+  "context",
+  "sourcesNote",
   "notes",
 ] as const;
 const LINE_KEYS = ["id", "stanza", "ko"] as const;
@@ -57,7 +59,9 @@ export type Song = {
   lines: LyricLine[];
   units: LyricUnit[];
   sources: Source[];
-  notes: string | null;
+  context: string | null;
+  sourcesNote: string | null;
+  notes?: string | null;
 };
 
 export type Catalog = {
@@ -77,12 +81,26 @@ export class CatalogValidationError extends Error {
   }
 }
 
+const CONTEXT_MAX_LENGTH = 200;
+
+export type CatalogRead = {
+  catalog: Catalog;
+  warnings: readonly string[];
+};
+
 export function parseCatalog(input: unknown): Catalog {
+  const read = readCatalog(input);
+  for (const warning of read.warnings) console.warn(warning);
+  return read.catalog;
+}
+
+export function readCatalog(input: unknown): CatalogRead {
   if (!isRecord(input)) {
     throw new CatalogValidationError(["racine : un objet est attendu."]);
   }
 
   const issues: string[] = [];
+  const warnings: string[] = [];
   rejectUnknown(input, ROOT_KEYS, "racine", issues);
 
   if (!Object.prototype.hasOwnProperty.call(input, "schemaVersion")) {
@@ -92,16 +110,19 @@ export function parseCatalog(input: unknown): Catalog {
   }
 
   const playlist = parsePlaylist(take(input, "playlist", "racine", issues), issues);
-  const songs = parseSongs(take(input, "songs", "racine", issues), issues);
+  const songs = parseSongs(take(input, "songs", "racine", issues), issues, warnings);
 
   if (!playlist || !songs || issues.length > 0) {
     throw new CatalogValidationError(issues.length > 0 ? issues : ["racine : catalogue illisible."]);
   }
 
   return {
-    schemaVersion: 1,
-    playlist,
-    songs,
+    catalog: {
+      schemaVersion: 1,
+      playlist,
+      songs,
+    },
+    warnings,
   };
 }
 
@@ -126,7 +147,7 @@ function parsePlaylist(value: unknown, issues: string[]): Catalog["playlist"] | 
   return { spotifyId: PLAYLIST_SPOTIFY_ID, name: PLAYLIST_NAME };
 }
 
-function parseSongs(value: unknown, issues: string[]): Song[] | null {
+function parseSongs(value: unknown, issues: string[], warnings: string[]): Song[] | null {
   if (value === undefined) return null;
   if (!Array.isArray(value)) {
     issues.push("songs : un tableau est attendu.");
@@ -135,13 +156,13 @@ function parseSongs(value: unknown, issues: string[]): Song[] | null {
   const ids = new Set<string>();
   const songs: Song[] = [];
   for (let index = 0; index < value.length; index += 1) {
-    const song = parseSong(value[index], index, ids, issues);
+    const song = parseSong(value[index], index, ids, issues, warnings);
     if (song) songs.push(song);
   }
   return songs;
 }
 
-function parseSong(value: unknown, index: number, ids: Set<string>, issues: string[]): Song | null {
+function parseSong(value: unknown, index: number, ids: Set<string>, issues: string[], warnings: string[]): Song | null {
   const path = `songs[${index}]`;
   if (!isRecord(value)) {
     issues.push(`${path} : un objet est attendu.`);
@@ -166,7 +187,7 @@ function parseSong(value: unknown, index: number, ids: Set<string>, issues: stri
   const parsedLines = parseLines(take(value, "lines", path, issues), `${path}.lines`, issues);
   const units = parseUnits(take(value, "units", path, issues), `${path}.units`, issues);
   const sources = parseSources(take(value, "sources", path, issues), `${path}.sources`, issues);
-  const notes = parseNullableText(take(value, "notes", path, issues), `${path}.notes`, issues);
+  const prose = parseSongProse(value, path, issues, warnings);
 
   if (parsedLines && units && issues.length === before) {
     checkUnits(parsedLines.lines, units, `${path}.units`, issues);
@@ -185,7 +206,7 @@ function parseSong(value: unknown, index: number, ids: Set<string>, issues: stri
     !parsedLines ||
     !units ||
     !sources ||
-    notes === undefined
+    !prose
   ) {
     return null;
   }
@@ -202,8 +223,59 @@ function parseSong(value: unknown, index: number, ids: Set<string>, issues: stri
     lines: parsedLines.lines,
     units,
     sources,
-    notes,
+    context: prose.context,
+    sourcesNote: prose.sourcesNote,
+    ...(prose.notes !== undefined ? { notes: prose.notes } : {}),
   };
+}
+
+function parseSongProse(
+  value: Record<string, unknown>,
+  path: string,
+  issues: string[],
+  warnings: string[],
+): { context: string | null; sourcesNote: string | null; notes?: string | null } | null {
+  const hasContext = Object.prototype.hasOwnProperty.call(value, "context");
+  const hasSourcesNote = Object.prototype.hasOwnProperty.call(value, "sourcesNote");
+  const hasNotes = Object.prototype.hasOwnProperty.call(value, "notes");
+  let context: string | null | undefined;
+  let sourcesNote: string | null | undefined;
+  let notes: string | null | undefined;
+
+  if (!hasContext && !hasSourcesNote) {
+    if (!hasNotes) {
+      issues.push(`${path}.context : clé absente.`);
+      issues.push(`${path}.sourcesNote : clé absente.`);
+    } else {
+      notes = parseNullableText(value.notes, `${path}.notes`, issues);
+      context = null;
+      sourcesNote = null;
+      if (notes !== undefined) warnings.push(notesDeprecation(path));
+    }
+  } else {
+    context = parseContext(take(value, "context", path, issues), `${path}.context`, issues);
+    sourcesNote = parseNullableText(take(value, "sourcesNote", path, issues), `${path}.sourcesNote`, issues);
+    if (hasNotes) {
+      notes = parseNullableText(value.notes, `${path}.notes`, issues);
+      if (notes !== undefined) warnings.push(notesDeprecation(path));
+    }
+  }
+
+  if (context === undefined || sourcesNote === undefined || (hasNotes && notes === undefined)) return null;
+  return hasNotes ? { context, sourcesNote, notes } : { context, sourcesNote };
+}
+
+function notesDeprecation(path: string): string {
+  return `${path}.notes : clé dépréciée, utiliser context et sourcesNote.`;
+}
+
+function parseContext(value: unknown, path: string, issues: string[]): string | null | undefined {
+  const text = parseNullableText(value, path, issues);
+  if (typeof text === "string" && [...text].length > CONTEXT_MAX_LENGTH) {
+    issues.push(`${path} : 200 caractères au plus.`);
+    return undefined;
+  }
+  return text;
 }
 
 function parseLines(value: unknown, path: string, issues: string[]): { lines: LyricLine[] } | null {
