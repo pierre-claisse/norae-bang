@@ -77,9 +77,9 @@ describe("schéma songs.json", () => {
       fragment: "context : clé absente",
     },
     {
-      name: "refuse un contexte de plus de 200 caractères",
-      change: (copy) => ({ ...copy, songs: [{ ...copy.songs[0], context: "가".repeat(201) }] }),
-      fragment: "200 caractères",
+      name: "refuse un contexte de plus de 140 caractères",
+      change: (copy) => ({ ...copy, songs: [{ ...copy.songs[0], context: "가".repeat(141) }] }),
+      fragment: "140 caractères",
     },
     {
       name: "refuse un statut inconnu",
@@ -210,10 +210,11 @@ describe("schéma songs.json", () => {
     expect(readCatalog(odd).catalog.songs[0]?.id).toBe("chanson-exemple");
   });
 
-  it("accepte un contexte de 200 caractères", () => {
+  it("accepte un contexte de 140 caractères", () => {
     const copy = structuredClone(catalog);
-    copy.songs = [{ ...copy.songs[0]!, context: "가".repeat(200) }];
-    expect(parseCatalog(copy).songs[0]?.context).toHaveLength(200);
+    copy.songs = [{ ...copy.songs[0]!, context: "가".repeat(140) }];
+    expect(parseCatalog(copy).songs[0]?.context).toHaveLength(140);
+    expect(readCatalog(copy).warnings).toEqual([]);
   });
 
   it("accepte notes avec un avertissement de dépréciation", () => {

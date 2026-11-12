@@ -33,7 +33,7 @@ L’API GitHub Contents ne renvoie pas un fichier de plus de 1 Mo. `songs.json` 
 | `lines` | tableau | voir ci-dessous, peut être vide, dans l’ordre chanté |
 | `units` | tableau | voir ci-dessous, peut être vide |
 | `sources` | tableau | voir ci-dessous, peut être vide |
-| `context` | chaîne ou `null` | phrase courte, 200 caractères au plus. Non vide si présente |
+| `context` | chaîne ou `null` | phrase courte, 140 caractères au plus. Non vide si présente |
 | `sourcesNote` | chaîne ou `null` | remarques de vérification. Non vide si présente |
 | `notes` | chaîne ou `null`, clé optionnelle | déprécié. Voir ci-dessous |
 
@@ -41,7 +41,7 @@ L’API GitHub Contents ne renvoie pas un fichier de plus de 1 Mo. `songs.json` 
 
 Ce remplacement ne change pas `schemaVersion` : ce n’est pas un corpus publié.
 
-Affichage : `context` suit le titre coréen, le titre français, puis l’artiste et l’année, sur une ou deux lignes. `sourcesNote` est montré en bas, dans la section « Sources », en texte secondaire, avec les liens `sources`. La section n’apparaît que si `sourcesNote`, `sources` ou un `notes` encore affiché a un contenu. Si `context` et `sourcesNote` sont vides et que `notes` a un texte, ce texte est affiché dans « Sources ».
+Affichage : `context` suit le titre coréen, le titre français, puis l’artiste et l’année, en entier. `sourcesNote` est montré en bas, dans la section « Sources », en texte secondaire, avec les liens `sources`. La section n’apparaît que si `sourcesNote`, `sources` ou un `notes` encore affiché a un contenu. Si `context` et `sourcesNote` sont vides et que `notes` a un texte, ce texte est affiché dans « Sources ».
 
 `artistLatin` n’est plus un champ. S’il est encore présent, le validateur l’ignore et émet un avertissement de dépréciation (`clé dépréciée, ignorée`), sans échouer. L’artiste s’affiche en hangeul seul.
 
