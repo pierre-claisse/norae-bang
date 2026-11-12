@@ -238,9 +238,41 @@ describe("schéma songs.json", () => {
     copy.songs = [{ ...copy.songs[0]!, notes: "Ancienne remarque factice." }];
     const read = readCatalog(copy);
     expect(read.warnings).toEqual(["songs[0].notes : clé dépréciée, utiliser context et sourcesNote."]);
-    expect(read.catalog.songs[0]?.context).toBe("Phrase de contexte factice, pour la fiche d'exemple.");
+    expect(read.catalog.songs[0]?.context).toBe(
+      "Phrase de contexte factice, pour la fiche d'exemple : «음음», en quête de proie?",
+    );
     expect(read.catalog.songs[0]?.sourcesNote).toContain("Remarque de vérification factice");
     expect(read.catalog.songs[0]?.notes).toBe("Ancienne remarque factice.");
+  });
+
+  it("accepte verificationLog, y compris null et une longue chaîne, et refuse la chaîne vide", () => {
+    expect(parseCatalog(catalog).songs[0]).not.toHaveProperty("verificationLog");
+    const long = `journal ${"vérifié ".repeat(80)}`;
+    expect([...long].length).toBeGreaterThan(140);
+    const copy = structuredClone(catalog);
+    copy.songs = [{ ...copy.songs[0]!, verificationLog: long }];
+    const read = readCatalog(copy);
+    expect(read.warnings).toEqual([]);
+    expect(read.catalog.songs[0]?.verificationLog).toBe(long);
+
+    const nulled = structuredClone(catalog);
+    nulled.songs = [{ ...nulled.songs[0]!, verificationLog: null }];
+    expect(parseCatalog(nulled).songs[0]?.verificationLog).toBeNull();
+    expect(readCatalog(nulled).warnings).toEqual([]);
+
+    for (const verificationLog of ["", "   "]) {
+      const empty = structuredClone(catalog);
+      empty.songs = [{ ...empty.songs[0]!, verificationLog }];
+      expect(
+        issues(empty).some((issue) => issue.includes("songs[0].verificationLog") && issue.includes("chaîne vide")),
+      ).toBe(true);
+    }
+
+    const wrong = structuredClone(catalog) as { songs: Array<Record<string, unknown>> };
+    wrong.songs[0]!.verificationLog = 12;
+    expect(issues(wrong).some((issue) => issue.includes("verificationLog") && issue.includes("chaîne ou null"))).toBe(
+      true,
+    );
   });
 
   it("accepte un identifiant Spotify et une URL http", () => {

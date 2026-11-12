@@ -723,6 +723,10 @@ a.artist-link {
     border-radius: 0;
     font-size: 1.125rem;
   }
+
+  .song .sources {
+    max-width: 70ch;
+  }
 }
 
 @media (min-width: 960px) {
