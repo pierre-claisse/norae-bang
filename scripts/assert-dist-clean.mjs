@@ -29,6 +29,9 @@ for (const required of [
   "dist/favicon-192.png",
   "dist/favicon-512.png",
   "dist/apple-touch-icon.png",
+  "dist/fonts.css",
+  "dist/fonts/Archivo.woff2",
+  "dist/fonts/Pretendard.woff2",
 ]) {
   await readFile(required);
 }

@@ -10,7 +10,7 @@ Lecture seule de `songs.json` à la racine du dépôt privé `pierre-claisse/nor
 
 L’appel envoie `Authorization: Bearer`, `Accept: application/vnd.github+json`, `cache: no-store`, `credentials: omit`, `redirect: error`. Le client n’a pas de méthode d’écriture. `User-Agent` n’est pas fixé : c’est un en-tête interdit dans un navigateur, qui fournit déjà le sien.
 
-Le jeton est un PAT fine-grained collé par l’utilisateur (`github_pat_…`). Il est stocké dans `localStorage` sous la clé `norae-bang.token`. Le lien « Jeton » ouvre une confirmation avant de l’effacer et de revenir à l’écran de connexion. Un jeton au mauvais format est effacé sans appel réseau. Les bascules « Romanisation » et « Traduction » sont mémorisées dans `norae-bang.show-romanization` et `norae-bang.show-translation`.
+Le jeton est un PAT fine-grained collé par l’utilisateur (`github_pat_…`). Il est stocké dans `localStorage` sous la clé `norae-bang.token`. Le lien « Jeton » ouvre une confirmation avant de l’effacer et de revenir à l’écran de connexion. Un jeton au mauvais format, refusé ou sans accès au dépôt, ramène à ce champ avec la cause. Le site ne traduit rien : il affiche les unités déjà enregistrées.
 
 Sans jeton valide, l’arbre React s’arrête à l’écran de connexion : pas de route, pas de requête. `npm run check-dist` refuse un jeton ou la fixture de test dans `dist/`.
 
@@ -21,8 +21,8 @@ Le fichier est parsé puis passé à `parseCatalog` (`docs/data-schema.md`). Tou
 ## Écrans
 
 - Connexion : lien de création du jeton, dépôt unique, permission Contents en lecture.
-- `/` : liste (titre hangeul, romanisation, titre français, artiste, badge), recherche locale.
-- `/chanson/:songId` : paroles ligne à ligne. Trois colonnes à partir de 800 px, empilées en dessous. Sources en bas. Message dédié si les paroles manquent.
+- `/` : liste (titre hangeul, titre français, artiste, badge), recherche locale.
+- `/chanson/:songId` : hangeul par couplet. Si des unités existent, le français est affiché à côté (ou dessous en mobile), avec la note sous le paragraphe. Sans unité, seul le hangeul est montré. Sources en bas. Message dédié si les paroles manquent.
 
 `BrowserRouter` utilise `basename={import.meta.env.BASE_URL}`. Le build copie `dist/index.html` vers `dist/404.html` pour le repli SPA de GitHub Pages.
 
@@ -32,7 +32,7 @@ Le fichier est parsé puis passé à `parseCatalog` (`docs/data-schema.md`). Tou
 
 ## Thème
 
-Clair uniquement.
+Sombre et chaud, façon façade d’ampli. Polices auto-hébergées : Archivo pour les titres, Pretendard pour le reste, y compris le hangeul. Le service worker met ces fichiers en cache avec le shell.
 
 ## CI
 

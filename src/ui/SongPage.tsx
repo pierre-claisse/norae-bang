@@ -1,8 +1,6 @@
-import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import type { LyricLine, Song } from "../domain/schema";
+import type { LyricLine, LyricUnit, Song } from "../domain/schema";
 import { statusLabel } from "../domain/status";
-import { readShowFlag, SHOW_ROMANIZATION_KEY, SHOW_TRANSLATION_KEY, writeShowFlag } from "./lyricPrefs";
 import { useDocumentTitle } from "./useDocumentTitle";
 
 export function SongPage({ songs }: { songs: readonly Song[] }) {
@@ -25,25 +23,26 @@ function SongDetail({ song }: { song: Song }) {
   return (
     <article className="song">
       <BackLink />
-      <div className="song-title-row">
-        <h1 lang="ko">{song.title}</h1>
-        <span className="badge" data-status={song.lyricsStatus}>
-          {statusLabel(song.lyricsStatus)}
-        </span>
-      </div>
-      {song.titleRomanized ? <p className="romanized">{song.titleRomanized}</p> : null}
-      {song.titleFr ? (
-        <p className="title-fr" lang="fr">
-          {song.titleFr}
+      <header className="song-banner">
+        <div className="song-title-row">
+          <h1 lang="ko">{song.title}</h1>
+          <span className="badge" data-status={song.lyricsStatus}>
+            {statusLabel(song.lyricsStatus)}
+          </span>
+        </div>
+        {song.titleFr ? (
+          <p className="title-fr" lang="fr">
+            {song.titleFr}
+          </p>
+        ) : null}
+        <p className="meta">
+          <span lang="ko">{song.artist}</span>
+          {song.artistLatin ? <span> ({song.artistLatin})</span> : null}
+          {song.year !== null ? <span> · {song.year}</span> : null}
         </p>
-      ) : null}
-      <p className="meta">
-        <span lang="ko">{song.artist}</span>
-        {song.artistRomanized ? <span> ({song.artistRomanized})</span> : null}
-        {song.year !== null ? <span> · {song.year}</span> : null}
-      </p>
-      {song.notes ? <p className="notes">{song.notes}</p> : null}
-      <section aria-labelledby="paroles">
+        {song.notes ? <p className="notes">{song.notes}</p> : null}
+      </header>
+      <section className="lyrics-sheet" aria-labelledby="paroles">
         <h2 id="paroles">Paroles</h2>
         {song.lyricsStatus === "draft" && view === "lyrics" ? (
           <p className="banner">Brouillon : ces paroles n’ont pas encore été vérifiées.</p>
@@ -84,7 +83,7 @@ function BackLink() {
 function LyricBody({ song, view }: { song: Song; view: LyricView }) {
   switch (view) {
     case "lyrics":
-      return <Lyrics lines={song.lines} />;
+      return song.units.length === 0 ? <PlainLines lines={song.lines} /> : <Units lines={song.lines} units={song.units} />;
     case "missing":
       return <p className="empty-lyrics">Les paroles de cette chanson ne sont pas encore disponibles.</p>;
     case "empty":
@@ -96,84 +95,55 @@ function LyricBody({ song, view }: { song: Song; view: LyricView }) {
   }
 }
 
-function Lyrics({ lines }: { lines: readonly LyricLine[] }) {
-  const [romanization, setRomanization] = useState(() => readShowFlag(SHOW_ROMANIZATION_KEY));
-  const [translation, setTranslation] = useState(() => readShowFlag(SHOW_TRANSLATION_KEY));
-  const columns = columnKey(romanization, translation);
+function PlainLines({ lines }: { lines: readonly LyricLine[] }) {
+  return <div className="plain-lyrics">{lineGroups(lines)}</div>;
+}
 
-  function toggleRomanization() {
-    setRomanization((value) => {
-      const next = !value;
-      writeShowFlag(SHOW_ROMANIZATION_KEY, next);
-      return next;
-    });
-  }
-
-  function toggleTranslation() {
-    setTranslation((value) => {
-      const next = !value;
-      writeShowFlag(SHOW_TRANSLATION_KEY, next);
-      return next;
-    });
-  }
-
+function Units({ lines, units }: { lines: readonly LyricLine[]; units: readonly LyricUnit[] }) {
+  const indexById = new Map(lines.map((line, index) => [line.id, index]));
   return (
-    <>
-      <div className="lyric-toggles" role="group" aria-label="Affichage des paroles">
-        <button type="button" className="toggle" aria-pressed={romanization} onClick={toggleRomanization}>
-          Romanisation
-        </button>
-        <button type="button" className="toggle" aria-pressed={translation} onClick={toggleTranslation}>
-          Traduction
-        </button>
-      </div>
-      <div className="lyrics" data-columns={columns}>
-        <div className="lyric-head">
-          <span>Coréen</span>
-          {romanization ? <span>Romanisation</span> : null}
-          {translation ? <span lang="fr">Français</span> : null}
-        </div>
-        {lines.map((line, index) => (
-          <div className="lyric-line" key={`${line.ko}-${index}`}>
-            <span className="lyric-cell lyric-ko" lang="ko">
-              {line.ko}
-            </span>
-            {romanization ? (
-              <span className="lyric-cell lyric-romanized">
-                <OptionalText value={line.romanized} />
-              </span>
-            ) : null}
-            {translation ? (
-              <span className="lyric-cell lyric-fr" lang="fr">
-                <OptionalText value={line.fr} />
-              </span>
-            ) : null}
-          </div>
-        ))}
-      </div>
-    </>
+    <div className="units">
+      {units.map((unit) => {
+        const start = indexById.get(unit.from) ?? 0;
+        const end = indexById.get(unit.to) ?? start;
+        const slice = lines.slice(start, end + 1);
+        return (
+          <article className="unit" key={`${unit.from}-${unit.to}`}>
+            {lineGroups(slice)}
+            <div className="unit-fr" lang="fr">
+              <p>{unit.fr}</p>
+              {unit.note ? <p className="unit-note">Note : {unit.note}</p> : null}
+            </div>
+          </article>
+        );
+      })}
+    </div>
   );
 }
 
-function OptionalText({ value }: { value: string | null }) {
-  if (value) return value;
+function lineGroups(lines: readonly LyricLine[]) {
+  const groups: LyricLine[][] = [];
+  for (const line of lines) {
+    const current = groups[groups.length - 1];
+    if (!current || current[0]?.stanza !== line.stanza) groups.push([line]);
+    else current.push(line);
+  }
   return (
-    <span className="missing-text">
-      <span aria-hidden="true">—</span>
-      <span className="sr-only">non renseigné</span>
-    </span>
+    <div className="unit-lines">
+      {groups.map((group) => (
+        <div className="stanza" key={group[0]?.id}>
+          {group.map((line) => (
+            <p className="lyric-ko" lang="ko" key={line.id}>
+              {line.ko}
+            </p>
+          ))}
+        </div>
+      ))}
+    </div>
   );
 }
 
 type LyricView = "lyrics" | "missing" | "empty";
-type ColumnKey = "all" | "ko-ro" | "ko-fr" | "ko";
-
-function columnKey(romanization: boolean, translation: boolean): ColumnKey {
-  if (romanization && translation) return "all";
-  if (romanization) return "ko-ro";
-  if (translation) return "ko-fr";
-  return "ko";
-}
 
 function lyricView(song: Song): LyricView {
   if (song.lyricsStatus === "missing") return "missing";

@@ -1,5 +1,13 @@
-const CACHE = "norae-bang-shell-v1";
-const SHELL = ["./manifest.webmanifest", "./favicon.svg", "./favicon-192.png", "./favicon-512.png"];
+const CACHE = "norae-bang-shell-v2";
+const SHELL = [
+  "./manifest.webmanifest",
+  "./fonts.css",
+  "./fonts/Archivo.woff2",
+  "./fonts/Pretendard.woff2",
+  "./favicon.svg",
+  "./favicon-192.png",
+  "./favicon-512.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));

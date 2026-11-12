@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import { catalogErrorMessage, loadCatalog } from "./domain/loadCatalog";
 import type { Catalog } from "./domain/schema";
-import { GitHubContents, type FetchLike } from "./github/client";
+import { GitHubContents, GitHubRequestError, type FetchLike } from "./github/client";
 import { TokenProvider, useToken } from "./token/TokenProvider";
 import type { TokenStorage } from "./token/storage";
 import { LoginScreen } from "./ui/LoginScreen";
@@ -31,8 +31,24 @@ export function App({ deps }: { deps?: AppDeps }) {
 
 function Gate({ fetchImpl }: { fetchImpl?: FetchLike }) {
   const token = useToken();
-  if (!token.current) return <LoginScreen />;
-  return <CatalogApp token={token.current} fetchImpl={fetchImpl} onForget={token.forget} />;
+  const [problem, setProblem] = useState<{ message: string; value: string } | null>(null);
+  const onForget = useCallback(() => {
+    setProblem(null);
+    token.forget();
+  }, [token]);
+  const onTokenProblem = useCallback(
+    (message: string) => {
+      setProblem({ message, value: token.current ?? "" });
+      token.forget();
+    },
+    [token],
+  );
+  if (!token.current) {
+    return <LoginScreen initialValue={problem?.value ?? ""} externalError={problem?.message ?? null} />;
+  }
+  return (
+    <CatalogApp token={token.current} fetchImpl={fetchImpl} onForget={onForget} onTokenProblem={onTokenProblem} />
+  );
 }
 
 type LoadState =
@@ -44,10 +60,12 @@ function CatalogApp({
   token,
   fetchImpl,
   onForget,
+  onTokenProblem,
 }: {
   token: string;
   fetchImpl?: FetchLike;
   onForget: () => void;
+  onTokenProblem: (message: string) => void;
 }) {
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<LoadState>({ kind: "loading" });
@@ -69,6 +87,11 @@ function CatalogApp({
       },
       (error: unknown) => {
         if (cancelled || controller.signal.aborted) return;
+        const access = tokenAccessMessage(error);
+        if (access) {
+          onTokenProblem(access);
+          return;
+        }
         setState({ kind: "error", message: catalogErrorMessage(error) });
       },
     );
@@ -76,7 +99,7 @@ function CatalogApp({
       cancelled = true;
       controller.abort();
     };
-  }, [token, fetchImpl, attempt]);
+  }, [token, fetchImpl, attempt, onTokenProblem]);
 
   switch (state.kind) {
     case "loading":
@@ -109,6 +132,25 @@ function CatalogApp({
       );
     default: {
       const unexpected: never = state;
+      return unexpected;
+    }
+  }
+}
+
+function tokenAccessMessage(error: unknown): string | null {
+  if (!(error instanceof GitHubRequestError)) return null;
+  switch (error.code) {
+    case "unauthorized":
+      return "GitHub refuse ce jeton";
+    case "forbidden":
+    case "not_found":
+      return "Ce jeton n’a pas accès à norae-bang-data";
+    case "network":
+      return "Erreur réseau. Impossible de joindre GitHub.";
+    case "http":
+      return null;
+    default: {
+      const unexpected: never = error.code;
       return unexpected;
     }
   }

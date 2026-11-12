@@ -1,19 +1,29 @@
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { useToken } from "../token/TokenProvider";
 import { useDocumentTitle } from "./useDocumentTitle";
 
 const TOKEN_URL = "https://github.com/settings/personal-access-tokens/new";
 
-export function LoginScreen() {
+export function LoginScreen({
+  initialValue = "",
+  externalError = null,
+}: {
+  initialValue?: string;
+  externalError?: string | null;
+}) {
   const token = useToken();
-  const [error, setError] = useState<string | null>(null);
+  const errorId = useId();
+  const [value, setValue] = useState(initialValue);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const [visible, setVisible] = useState(false);
+  const error = editing ? localError : (localError ?? externalError);
   useDocumentTitle("Connexion · norae-bang");
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const raw = new FormData(event.currentTarget).get("token");
-    setError(token.save(typeof raw === "string" ? raw : ""));
+    setEditing(false);
+    setLocalError(token.save(value));
   }
 
   return (
@@ -51,12 +61,20 @@ export function LoginScreen() {
               id="token"
               name="token"
               type={visible ? "text" : "password"}
+              value={value}
               placeholder="github_pat_…"
               autoComplete="off"
               autoCapitalize="off"
               autoCorrect="off"
               spellCheck={false}
               required
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? errorId : undefined}
+              onChange={(event) => {
+                setEditing(true);
+                setLocalError(null);
+                setValue(event.target.value);
+              }}
             />
             <button
               type="button"
@@ -64,12 +82,17 @@ export function LoginScreen() {
               aria-controls="token"
               aria-pressed={visible}
               aria-label={visible ? "Masquer le jeton" : "Afficher le jeton"}
-              onClick={() => setVisible((value) => !value)}
+              onClick={() => setVisible((next) => !next)}
             >
               <EyeIcon off={visible} />
             </button>
           </div>
-          {error ? <p role="alert">{error}</p> : null}
+          {error ? (
+            <p id={errorId} className="field-error" role="alert">
+              <AlertIcon />
+              <span>{error}</span>
+            </p>
+          ) : null}
           <button className="wide" type="submit">
             Enregistrer le jeton
           </button>
@@ -96,6 +119,16 @@ function EyeIcon({ off }: { off: boolean }) {
           <circle cx="12" cy="12" r="2.4" />
         </>
       )}
+    </svg>
+  );
+}
+
+function AlertIcon() {
+  return (
+    <svg className="icon alert-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 8v5" />
+      <path d="M12 16.5h.01" />
     </svg>
   );
 }

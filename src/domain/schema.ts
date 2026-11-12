@@ -13,23 +13,31 @@ const SONG_KEYS = [
   "id",
   "spotifyTrackId",
   "title",
-  "titleRomanized",
   "titleFr",
   "artist",
-  "artistRomanized",
+  "artistLatin",
   "year",
   "lyricsStatus",
   "lines",
+  "units",
   "sources",
   "notes",
 ] as const;
-const LINE_KEYS = ["ko", "romanized", "fr"] as const;
+const LINE_KEYS = ["id", "stanza", "ko"] as const;
+const UNIT_KEYS = ["from", "to", "fr", "note"] as const;
 const SOURCE_KEYS = ["label", "url"] as const;
 
 export type LyricLine = {
+  id: string;
+  stanza: number;
   ko: string;
-  romanized: string | null;
-  fr: string | null;
+};
+
+export type LyricUnit = {
+  from: string;
+  to: string;
+  fr: string;
+  note: string | null;
 };
 
 export type Source = {
@@ -41,13 +49,13 @@ export type Song = {
   id: string;
   spotifyTrackId: string | null;
   title: string;
-  titleRomanized: string | null;
   titleFr: string | null;
   artist: string;
-  artistRomanized: string | null;
+  artistLatin: string | null;
   year: number | null;
   lyricsStatus: LyricsStatus;
   lines: LyricLine[];
+  units: LyricUnit[];
   sources: Source[];
   notes: string | null;
 };
@@ -150,28 +158,32 @@ function parseSong(value: unknown, index: number, ids: Set<string>, issues: stri
 
   const spotifyTrackId = parseSpotifyTrackId(take(value, "spotifyTrackId", path, issues), `${path}.spotifyTrackId`, issues);
   const title = parseRequiredText(take(value, "title", path, issues), `${path}.title`, issues);
-  const titleRomanized = parseNullableText(take(value, "titleRomanized", path, issues), `${path}.titleRomanized`, issues);
   const titleFr = parseNullableText(take(value, "titleFr", path, issues), `${path}.titleFr`, issues);
   const artist = parseRequiredText(take(value, "artist", path, issues), `${path}.artist`, issues);
-  const artistRomanized = parseNullableText(take(value, "artistRomanized", path, issues), `${path}.artistRomanized`, issues);
+  const artistLatin = parseNullableText(take(value, "artistLatin", path, issues), `${path}.artistLatin`, issues);
   const year = parseYear(take(value, "year", path, issues), `${path}.year`, issues);
   const lyricsStatus = parseLyricsStatus(take(value, "lyricsStatus", path, issues), `${path}.lyricsStatus`, issues);
-  const lines = parseLines(take(value, "lines", path, issues), `${path}.lines`, issues);
+  const parsedLines = parseLines(take(value, "lines", path, issues), `${path}.lines`, issues);
+  const units = parseUnits(take(value, "units", path, issues), `${path}.units`, issues);
   const sources = parseSources(take(value, "sources", path, issues), `${path}.sources`, issues);
   const notes = parseNullableText(take(value, "notes", path, issues), `${path}.notes`, issues);
+
+  if (parsedLines && units && issues.length === before) {
+    checkUnits(parsedLines.lines, units, `${path}.units`, issues);
+  }
 
   if (
     issues.length !== before ||
     !id ||
     spotifyTrackId === undefined ||
     !title ||
-    titleRomanized === undefined ||
     titleFr === undefined ||
     !artist ||
-    artistRomanized === undefined ||
+    artistLatin === undefined ||
     year === undefined ||
     !lyricsStatus ||
-    !lines ||
+    !parsedLines ||
+    !units ||
     !sources ||
     notes === undefined
   ) {
@@ -182,30 +194,46 @@ function parseSong(value: unknown, index: number, ids: Set<string>, issues: stri
     id,
     spotifyTrackId,
     title,
-    titleRomanized,
     titleFr,
     artist,
-    artistRomanized,
+    artistLatin,
     year,
     lyricsStatus,
-    lines,
+    lines: parsedLines.lines,
+    units,
     sources,
     notes,
   };
 }
 
-function parseLines(value: unknown, path: string, issues: string[]): LyricLine[] | null {
+function parseLines(value: unknown, path: string, issues: string[]): { lines: LyricLine[] } | null {
   if (value === undefined) return null;
   if (!Array.isArray(value)) {
     issues.push(`${path} : un tableau est attendu.`);
     return null;
   }
+  const before = issues.length;
   const lines: LyricLine[] = [];
+  const seen = new Set<string>();
   for (let index = 0; index < value.length; index += 1) {
     const line = parseLine(value[index], `${path}[${index}]`, issues);
-    if (line) lines.push(line);
+    if (!line) continue;
+    if (seen.has(line.id)) issues.push(`${path}[${index}].id : identifiant déjà utilisé (${line.id}).`);
+    seen.add(line.id);
+    if (lines.length === 0 && line.stanza !== 1) {
+      issues.push(`${path}[${index}].stanza : le premier couplet doit être 1.`);
+    } else if (lines.length > 0) {
+      const previous = lines[lines.length - 1]?.stanza ?? line.stanza;
+      if (line.stanza < previous) {
+        issues.push(`${path}[${index}].stanza : le numéro de couplet doit être croissant.`);
+      } else if (line.stanza > previous + 1) {
+        issues.push(`${path}[${index}].stanza : le numéro de couplet doit augmenter d’un seul cran.`);
+      }
+    }
+    lines.push(line);
   }
-  return lines;
+  if (issues.length !== before) return null;
+  return { lines };
 }
 
 function parseLine(value: unknown, path: string, issues: string[]): LyricLine | null {
@@ -215,11 +243,96 @@ function parseLine(value: unknown, path: string, issues: string[]): LyricLine | 
   }
   const before = issues.length;
   rejectUnknown(value, LINE_KEYS, path, issues);
+  const id = parseRequiredText(take(value, "id", path, issues), `${path}.id`, issues);
+  const stanza = parseStanza(take(value, "stanza", path, issues), `${path}.stanza`, issues);
   const ko = parseRequiredText(take(value, "ko", path, issues), `${path}.ko`, issues);
-  const romanized = parseNullableText(take(value, "romanized", path, issues), `${path}.romanized`, issues);
-  const fr = parseNullableText(take(value, "fr", path, issues), `${path}.fr`, issues);
-  if (issues.length !== before || !ko || romanized === undefined || fr === undefined) return null;
-  return { ko, romanized, fr };
+  if (issues.length !== before || !id || stanza === undefined || !ko) return null;
+  return { id, stanza, ko };
+}
+
+function parseUnits(value: unknown, path: string, issues: string[]): LyricUnit[] | null {
+  if (value === undefined) return null;
+  if (!Array.isArray(value)) {
+    issues.push(`${path} : un tableau est attendu.`);
+    return null;
+  }
+  const before = issues.length;
+  const units: LyricUnit[] = [];
+  for (let index = 0; index < value.length; index += 1) {
+    const unit = parseUnit(value[index], `${path}[${index}]`, issues);
+    if (unit) units.push(unit);
+  }
+  if (issues.length !== before) return null;
+  return units;
+}
+
+function parseUnit(value: unknown, path: string, issues: string[]): LyricUnit | null {
+  if (!isRecord(value)) {
+    issues.push(`${path} : un objet est attendu.`);
+    return null;
+  }
+  const before = issues.length;
+  rejectUnknown(value, UNIT_KEYS, path, issues);
+  const from = parseRequiredText(take(value, "from", path, issues), `${path}.from`, issues);
+  const to = parseRequiredText(take(value, "to", path, issues), `${path}.to`, issues);
+  const fr = parseRequiredText(take(value, "fr", path, issues), `${path}.fr`, issues);
+  const note = parseNullableText(take(value, "note", path, issues), `${path}.note`, issues);
+  if (issues.length !== before || !from || !to || !fr || note === undefined) return null;
+  return { from, to, fr, note };
+}
+
+function checkUnits(lines: readonly LyricLine[], units: readonly LyricUnit[], path: string, issues: string[]) {
+  if (units.length === 0) return;
+  const indexById = new Map(lines.map((line, index) => [line.id, index]));
+  const spans: Array<{ from: number; to: number }> = [];
+  units.forEach((unit, index) => {
+    const from = indexById.get(unit.from);
+    const to = indexById.get(unit.to);
+    if (from === undefined) issues.push(`${path}[${index}].from : identifiant de ligne inconnu (${unit.from}).`);
+    if (to === undefined) issues.push(`${path}[${index}].to : identifiant de ligne inconnu (${unit.to}).`);
+    if (from !== undefined && to !== undefined && from > to) {
+      issues.push(`${path}[${index}] : from est après to (ordre inversé).`);
+    }
+    if (from !== undefined && to !== undefined && from <= to) spans.push({ from, to });
+  });
+  if (spans.length !== units.length) return;
+
+  for (let index = 1; index < spans.length; index += 1) {
+    const current = spans[index];
+    const previous = spans[index - 1];
+    if (!current || !previous) continue;
+    if (current.from < previous.from) {
+      issues.push(`${path}[${index}] : les unités ne sont pas dans l’ordre chanté.`);
+    }
+  }
+
+  const first = spans[0];
+  if (first && first.from !== 0) {
+    issues.push(`${path} : trou avant la première unité. Les unités ne couvrent pas toutes les lignes.`);
+  }
+  for (let index = 1; index < spans.length; index += 1) {
+    const current = spans[index];
+    const previous = spans[index - 1];
+    if (!current || !previous) continue;
+    if (current.from <= previous.to) {
+      issues.push(`${path}[${index}] : cette unité chevauche la précédente.`);
+    } else if (current.from > previous.to + 1) {
+      issues.push(`${path}[${index}] : trou entre cette unité et la précédente.`);
+    }
+  }
+  const last = spans[spans.length - 1];
+  if (last && last.to !== lines.length - 1) {
+    issues.push(`${path} : les unités ne couvrent pas toutes les lignes.`);
+  }
+}
+
+function parseStanza(value: unknown, path: string, issues: string[]): number | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1) {
+    issues.push(`${path} : un entier supérieur ou égal à 1 est attendu.`);
+    return undefined;
+  }
+  return value;
 }
 
 function parseSources(value: unknown, path: string, issues: string[]): Source[] | null {
