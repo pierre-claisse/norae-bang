@@ -67,7 +67,6 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
                   ) : null}
                   <span className="meta">
                     <span lang="ko">{song.artist}</span>
-                    {song.artistLatin ? <span> ({song.artistLatin})</span> : null}
                     {song.year !== null ? <span> · {song.year}</span> : null}
                   </span>
                 </span>

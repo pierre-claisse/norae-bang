@@ -62,6 +62,8 @@ describe("application", () => {
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBe(TOKEN);
     expect(screen.getByText("Chanson exemple")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Chanson exemple/ }).textContent).toContain("가수 예시 · 2020");
+    expect(screen.queryByText("Artiste exemple")).toBeNull();
     expect(screen.getAllByText("Paroles vérifiées")).toHaveLength(2);
     expect(screen.getByText("Brouillon")).toBeInTheDocument();
     expect(screen.getByText("Paroles manquantes")).toBeInTheDocument();
@@ -73,6 +75,8 @@ describe("application", () => {
 
     await user.click(screen.getByRole("link", { name: /Chanson exemple/ }));
     expect(await screen.findByRole("heading", { name: "예시 노래" })).toBeInTheDocument();
+    expect(document.querySelector(".song .meta")?.textContent).toBe("가수 예시 · 2020");
+    expect(screen.queryByText("Artiste exemple")).toBeNull();
     expect(screen.getByText("Phrase de contexte factice, pour la fiche d'exemple.")).toBeInTheDocument();
     expect(screen.getByText(/Remarque de vérification factice/)).toBeInTheDocument();
     expect(screen.getByText(/가짜줄예시/)).toBeInTheDocument();

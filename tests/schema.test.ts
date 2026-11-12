@@ -163,6 +163,19 @@ describe("schéma songs.json", () => {
     expect(issues(copy).some((issue) => issue.includes("titleRomanized"))).toBe(true);
   });
 
+  it("ignore artistLatin avec un avertissement, sans échouer", () => {
+    const copy = structuredClone(catalog);
+    const song = { ...copy.songs[0]!, artistLatin: "Artiste exemple" };
+    copy.songs = [song as Catalog["songs"][number]];
+    const read = readCatalog(copy);
+    expect(read.warnings).toEqual(["songs[0].artistLatin : clé dépréciée, ignorée."]);
+    expect(read.catalog.songs[0]).not.toHaveProperty("artistLatin");
+    expect(read.catalog.songs[0]?.artist).toBe("가수 예시");
+    const odd = structuredClone(catalog);
+    odd.songs = [{ ...odd.songs[0]!, artistLatin: 12 } as Catalog["songs"][number]];
+    expect(readCatalog(odd).catalog.songs[0]?.id).toBe("chanson-exemple");
+  });
+
   it("accepte un contexte de 200 caractères", () => {
     const copy = structuredClone(catalog);
     copy.songs = [{ ...copy.songs[0]!, context: "가".repeat(200) }];

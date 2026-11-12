@@ -42,7 +42,6 @@ function SongDetail({ song }: { song: Song }) {
         ) : null}
         <p className="meta">
           <span lang="ko">{song.artist}</span>
-          {song.artistLatin ? <span> ({song.artistLatin})</span> : null}
           {song.year !== null ? <span> · {song.year}</span> : null}
         </p>
       </header>
