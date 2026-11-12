@@ -11,7 +11,6 @@
       "title": "예시 노래",
       "titleFr": "Chanson exemple",
       "artist": "가수 예시",
-      "artistLatin": "Artiste exemple",
       "year": 2020,
       "lyricsStatus": "verified",
       "lines": [
@@ -61,7 +60,6 @@
       "title": "한글만",
       "titleFr": "Seulement le hangeul",
       "artist": "가수 예시",
-      "artistLatin": null,
       "year": null,
       "lyricsStatus": "verified",
       "lines": [
@@ -79,7 +77,6 @@
       "title": "초고 노래",
       "titleFr": "Brouillon exemple",
       "artist": "가수 예시",
-      "artistLatin": "Artiste exemple",
       "year": null,
       "lyricsStatus": "draft",
       "lines": [{ "id": "b1", "stanza": 1, "ko": "미완성 예시" }],
@@ -94,7 +91,6 @@
       "title": "빈 노래",
       "titleFr": "Sans paroles",
       "artist": "가수 예시",
-      "artistLatin": null,
       "year": null,
       "lyricsStatus": "missing",
       "lines": [],

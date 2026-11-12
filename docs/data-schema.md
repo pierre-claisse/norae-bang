@@ -27,8 +27,7 @@ L’API GitHub Contents ne renvoie pas un fichier de plus de 1 Mo. `songs.json` 
 | `spotifyTrackId` | chaîne ou `null` | `null`, ou 22 caractères `[A-Za-z0-9]` |
 | `title` | chaîne | titre en hangeul, non vide |
 | `titleFr` | chaîne ou `null` | titre français, non vide si présent |
-| `artist` | chaîne | non vide |
-| `artistLatin` | chaîne ou `null` | nom officiel en lettres latines, pas une romanisation. Non vide si présent |
+| `artist` | chaîne | hangeul, non vide. Seul nom affiché, dans la liste et sur la fiche |
 | `year` | nombre ou `null` | `null`, ou entier de 1900 à 2100 |
 | `lyricsStatus` | chaîne | `missing`, `draft` ou `verified` |
 | `lines` | tableau | voir ci-dessous, peut être vide, dans l’ordre chanté |
@@ -43,6 +42,8 @@ L’API GitHub Contents ne renvoie pas un fichier de plus de 1 Mo. `songs.json` 
 Ce remplacement ne change pas `schemaVersion` : ce n’est pas un corpus publié.
 
 Affichage : `context` est montré sous le titre, sur une ou deux lignes. `sourcesNote` est montré en bas, dans la section « Sources », en texte secondaire, avec les liens `sources`. La section n’apparaît que si `sourcesNote`, `sources` ou un `notes` encore affiché a un contenu. Si `context` et `sourcesNote` sont vides et que `notes` a un texte, ce texte est affiché dans « Sources ».
+
+`artistLatin` n’est plus un champ. S’il est encore présent, le validateur l’ignore et émet un avertissement de dépréciation (`clé dépréciée, ignorée`), sans échouer. L’artiste s’affiche en hangeul seul.
 
 Il n’y a pas de romanisation. Le site n’en affiche pas et n’en produit pas.
 

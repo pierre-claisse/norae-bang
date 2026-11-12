@@ -8,7 +8,7 @@ export function filterSongs(songs: readonly Song[], query: string): Song[] {
 
 function haystack(song: Song): string {
   return fold(
-    [song.title, song.titleFr, song.artist, song.artistLatin].filter(Boolean).join(" "),
+    [song.title, song.titleFr, song.artist].filter(Boolean).join(" "),
   );
 }
 

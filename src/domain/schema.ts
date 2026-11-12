@@ -15,7 +15,6 @@ const SONG_KEYS = [
   "title",
   "titleFr",
   "artist",
-  "artistLatin",
   "year",
   "lyricsStatus",
   "lines",
@@ -53,7 +52,6 @@ export type Song = {
   title: string;
   titleFr: string | null;
   artist: string;
-  artistLatin: string | null;
   year: number | null;
   lyricsStatus: LyricsStatus;
   lines: LyricLine[];
@@ -169,7 +167,7 @@ function parseSong(value: unknown, index: number, ids: Set<string>, issues: stri
     return null;
   }
   const before = issues.length;
-  rejectUnknown(value, SONG_KEYS, path, issues);
+  rejectUnknown(value, SONG_KEYS, path, issues, warnings, DEPRECATED_SONG_KEYS);
 
   const id = parseSlug(take(value, "id", path, issues), `${path}.id`, issues);
   if (id) {
@@ -181,7 +179,6 @@ function parseSong(value: unknown, index: number, ids: Set<string>, issues: stri
   const title = parseRequiredText(take(value, "title", path, issues), `${path}.title`, issues);
   const titleFr = parseNullableText(take(value, "titleFr", path, issues), `${path}.titleFr`, issues);
   const artist = parseRequiredText(take(value, "artist", path, issues), `${path}.artist`, issues);
-  const artistLatin = parseNullableText(take(value, "artistLatin", path, issues), `${path}.artistLatin`, issues);
   const year = parseYear(take(value, "year", path, issues), `${path}.year`, issues);
   const lyricsStatus = parseLyricsStatus(take(value, "lyricsStatus", path, issues), `${path}.lyricsStatus`, issues);
   const parsedLines = parseLines(take(value, "lines", path, issues), `${path}.lines`, issues);
@@ -200,7 +197,6 @@ function parseSong(value: unknown, index: number, ids: Set<string>, issues: stri
     !title ||
     titleFr === undefined ||
     !artist ||
-    artistLatin === undefined ||
     year === undefined ||
     !lyricsStatus ||
     !parsedLines ||
@@ -217,7 +213,6 @@ function parseSong(value: unknown, index: number, ids: Set<string>, issues: stri
     title,
     titleFr,
     artist,
-    artistLatin,
     year,
     lyricsStatus,
     lines: parsedLines.lines,
@@ -514,9 +509,23 @@ function take(record: Record<string, unknown>, key: string, path: string, issues
   return record[key];
 }
 
-function rejectUnknown(record: Record<string, unknown>, allowed: readonly string[], path: string, issues: string[]) {
+const DEPRECATED_SONG_KEYS = ["artistLatin"] as const;
+
+function rejectUnknown(
+  record: Record<string, unknown>,
+  allowed: readonly string[],
+  path: string,
+  issues: string[],
+  warnings?: string[],
+  deprecated: readonly string[] = [],
+) {
   for (const key of Object.keys(record)) {
-    if (!allowed.includes(key)) issues.push(`${path}.${key} : clé inconnue.`);
+    if (allowed.includes(key)) continue;
+    if (deprecated.includes(key)) {
+      warnings?.push(`${path}.${key} : clé dépréciée, ignorée.`);
+      continue;
+    }
+    issues.push(`${path}.${key} : clé inconnue.`);
   }
 }
 
