@@ -11,9 +11,10 @@ describe("recherche", () => {
     expect(filterSongs([withAccent], "deja").map((song) => song.id)).toEqual([withAccent.id]);
   });
 
-  it("cherche dans le titre, la romanisation et l’artiste", () => {
-    expect(filterSongs(songs, "YESI").map((song) => song.id)).toEqual(["chanson-exemple"]);
+  it("cherche dans le hangeul, le français et le nom latin de l’artiste", () => {
+    expect(filterSongs(songs, "chanson").map((song) => song.id)).toEqual(["chanson-exemple"]);
     expect(filterSongs(songs, "sans paroles").map((song) => song.id)).toEqual(["sans-paroles"]);
     expect(filterSongs(songs, "artiste").map((song) => song.id)).toEqual(["chanson-exemple", "brouillon-exemple"]);
+    expect(filterSongs(songs, "한글만").map((song) => song.id)).toEqual(["sans-traduction"]);
   });
 });

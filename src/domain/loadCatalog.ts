@@ -9,11 +9,7 @@ export type TextFileSource = {
 
 export async function loadCatalog(source: TextFileSource, signal?: AbortSignal): Promise<Catalog> {
   const file = await source.getFile(CATALOG_PATH, signal);
-  if (!file) {
-    throw new Error(
-      "songs.json est introuvable à la racine de pierre-claisse/norae-bang-data, ou le dépôt n’est pas visible avec ce jeton.",
-    );
-  }
+  if (!file) throw new GitHubRequestError("not_found", 404);
   let json: unknown;
   try {
     json = JSON.parse(file.text.replace(/^\uFEFF/, ""));

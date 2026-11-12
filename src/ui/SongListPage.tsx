@@ -9,38 +9,52 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
   const [query, setQuery] = useState("");
   const filtered = useMemo(() => filterSongs(songs, query), [songs, query]);
   useDocumentTitle("Répertoire · norae-bang");
+  const searching = query.trim().length > 0;
 
   return (
     <>
       <h1>Répertoire</h1>
       <p className="lede">Chansons coréennes, paroles vérifiées, traduction française.</p>
-      <label className="search" htmlFor="recherche">
-        Rechercher
-        <input
-          id="recherche"
-          type="search"
-          value={query}
-          placeholder="Titre, romanisation, artiste"
-          onChange={(event) => setQuery(event.target.value)}
-        />
-      </label>
-      <p className="count" aria-live="polite">
-        {countLabel(filtered.length)}
-      </p>
-      {filtered.length === 0 ? (
-        <p>{query.trim() ? "Aucune chanson ne correspond à cette recherche." : "Le répertoire ne contient encore aucune chanson."}</p>
+      <div className="search">
+        <label htmlFor="recherche">Rechercher</label>
+        <div className="search-field">
+          <input
+            id="recherche"
+            type="search"
+            value={query}
+            placeholder="Titre (hangeul ou français), artiste"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          {searching ? (
+            <button type="button" className="clear-search" aria-label="Effacer la recherche" onClick={() => setQuery("")}>
+              <span aria-hidden="true">×</span>
+            </button>
+          ) : null}
+        </div>
+      </div>
+      {filtered.length > 0 ? (
+        <p className="count" aria-live="polite">
+          {countLabel(filtered.length)}
+        </p>
       ) : (
+        <p className="count" aria-live="polite">
+          {searching ? "Aucune chanson ne correspond à cette recherche." : "Le répertoire ne contient encore aucune chanson."}
+        </p>
+      )}
+      {filtered.length === 0 && searching ? (
+        <button type="button" className="text-link" onClick={() => setQuery("")}>
+          Effacer la recherche
+        </button>
+      ) : null}
+      {filtered.length > 0 ? (
         <ul className="songs">
           {filtered.map((song) => (
             <li key={song.id}>
               <Link to={`/chanson/${song.id}`} className="song-card">
                 <span className="song-body">
                   <span className="song-heading">
-                    <span className="title-line">
-                      <span className="song-title" lang="ko">
-                        {song.title}
-                      </span>
-                      {song.titleRomanized ? <span className="romanized">{song.titleRomanized}</span> : null}
+                    <span className="song-title" lang="ko">
+                      {song.title}
                     </span>
                     <span className="badge" data-status={song.lyricsStatus}>
                       {statusLabel(song.lyricsStatus)}
@@ -53,7 +67,7 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
                   ) : null}
                   <span className="meta">
                     <span lang="ko">{song.artist}</span>
-                    {song.artistRomanized ? <span> ({song.artistRomanized})</span> : null}
+                    {song.artistLatin ? <span> ({song.artistLatin})</span> : null}
                     {song.year !== null ? <span> · {song.year}</span> : null}
                   </span>
                 </span>
@@ -62,7 +76,7 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
     </>
   );
 }
@@ -76,7 +90,6 @@ function Chevron() {
 }
 
 function countLabel(count: number): string {
-  if (count === 0) return "Aucune chanson";
   if (count === 1) return "1 chanson";
   return `${count} chansons`;
 }

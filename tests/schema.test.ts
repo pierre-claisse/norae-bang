@@ -125,6 +125,36 @@ describe("schéma songs.json", () => {
     });
   }
 
+  it("accepte une chanson sans traduction", () => {
+    const song = parseCatalog(catalog).songs.find((item) => item.id === "sans-traduction");
+    expect(song?.units).toEqual([]);
+    expect(song?.lines.length).toBeGreaterThan(0);
+  });
+
+  it("signale un chevauchement d’unités", () => {
+    const units = structuredClone(catalog.songs[0]!.units);
+    units[1] = { ...units[1]!, from: "l1" };
+    expect(issues(withUnits(units)).some((issue) => issue.includes("chevauche"))).toBe(true);
+  });
+
+  it("signale un trou entre deux unités", () => {
+    const units = structuredClone(catalog.songs[0]!.units);
+    units[1] = { ...units[1]!, from: "l3" };
+    expect(issues(withUnits(units)).some((issue) => issue.includes("trou"))).toBe(true);
+  });
+
+  it("signale un ordre inversé", () => {
+    const units = structuredClone(catalog.songs[0]!.units);
+    units[1] = { ...units[1]!, from: "l4", to: "l2" };
+    expect(issues(withUnits(units)).some((issue) => issue.includes("ordre inversé"))).toBe(true);
+  });
+
+  it("refuse une romanisation", () => {
+    const copy = structuredClone(catalog);
+    copy.songs = [{ ...copy.songs[0]!, titleRomanized: "non" } as Catalog["songs"][number]];
+    expect(issues(copy).some((issue) => issue.includes("titleRomanized"))).toBe(true);
+  });
+
   it("accepte un identifiant Spotify et une URL http", () => {
     const copy = structuredClone(catalog);
     copy.songs = [
@@ -137,6 +167,12 @@ describe("schéma songs.json", () => {
     expect(parseCatalog(copy).songs[0]?.spotifyTrackId).toBe("0123456789abcdefghijkl");
   });
 });
+
+function withUnits(units: Catalog["songs"][number]["units"]) {
+  const copy = structuredClone(catalog);
+  copy.songs = [{ ...copy.songs[0]!, units }];
+  return copy;
+}
 
 function issues(input: unknown): readonly string[] {
   try {

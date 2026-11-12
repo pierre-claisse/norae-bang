@@ -9,30 +9,75 @@
       "id": "chanson-exemple",
       "spotifyTrackId": null,
       "title": "예시 노래",
-      "titleRomanized": "Yesi norae",
       "titleFr": "Chanson exemple",
       "artist": "가수 예시",
-      "artistRomanized": "Artiste exemple",
+      "artistLatin": "Artiste exemple",
       "year": 2020,
       "lyricsStatus": "verified",
       "lines": [
-        { "ko": "예시 가사", "romanized": "Yesi gasa", "fr": "Parole exemple" },
-        { "ko": "둘째 줄", "romanized": "Duljjae jul", "fr": "Deuxième ligne exemple" }
+        { "id": "l1", "stanza": 1, "ko": "라라 가가 나나" },
+        { "id": "l2", "stanza": 1, "ko": "다다 마마 바바" },
+        { "id": "l3", "stanza": 1, "ko": "사사 아아 자자" },
+        { "id": "l4", "stanza": 1, "ko": "차차 카카 타타" },
+        { "id": "l5", "stanza": 1, "ko": "파파 하 예시" },
+        { "id": "l6", "stanza": 2, "ko": "노래 아닌 줄" },
+        { "id": "l7", "stanza": 2, "ko": "자자 차차 카카" },
+        { "id": "l8", "stanza": 2, "ko": "타타 파파 하하" },
+        { "id": "l9", "stanza": 2, "ko": "가가 나나 다다" },
+        { "id": "l10", "stanza": 2, "ko": "마마 바바 사사" }
+      ],
+      "units": [
+        { "from": "l1", "to": "l1", "fr": "Une seule ligne inventée.", "note": null },
+        {
+          "from": "l2",
+          "to": "l4",
+          "fr": "Trois lignes inventées, sans aucun rapport avec une chanson réelle.",
+          "note": "Jeu de mots inventé pour la fixture."
+        },
+        {
+          "from": "l5",
+          "to": "l6",
+          "fr": "Cette unité inventée commence au premier couplet et finit au second.",
+          "note": null
+        },
+        {
+          "from": "l7",
+          "to": "l10",
+          "fr": "Quatre lignes inventées pour remplir le couplet suivant.",
+          "note": null
+        }
       ],
       "sources": [{ "label": "Source exemple", "url": "https://example.com/source-exemple" }],
       "notes": "Fixture factice, sans rapport avec une œuvre réelle."
     },
     {
+      "id": "sans-traduction",
+      "spotifyTrackId": null,
+      "title": "한글만",
+      "titleFr": "Seulement le hangeul",
+      "artist": "가수 예시",
+      "artistLatin": null,
+      "year": null,
+      "lyricsStatus": "verified",
+      "lines": [
+        { "id": "h1", "stanza": 1, "ko": "가나 다라" },
+        { "id": "h2", "stanza": 1, "ko": "마바 사아" }
+      ],
+      "units": [],
+      "sources": [],
+      "notes": null
+    },
+    {
       "id": "brouillon-exemple",
       "spotifyTrackId": null,
       "title": "초고 노래",
-      "titleRomanized": "Chogo norae",
       "titleFr": "Brouillon exemple",
       "artist": "가수 예시",
-      "artistRomanized": "Artiste exemple",
+      "artistLatin": "Artiste exemple",
       "year": null,
       "lyricsStatus": "draft",
-      "lines": [{ "ko": "미완성", "romanized": null, "fr": null }],
+      "lines": [{ "id": "b1", "stanza": 1, "ko": "미완성 예시" }],
+      "units": [{ "from": "b1", "to": "b1", "fr": "Brouillon d'une ligne inventée.", "note": null }],
       "sources": [],
       "notes": null
     },
@@ -40,13 +85,13 @@
       "id": "sans-paroles",
       "spotifyTrackId": null,
       "title": "빈 노래",
-      "titleRomanized": "Bin norae",
       "titleFr": "Sans paroles",
       "artist": "가수 예시",
-      "artistRomanized": null,
+      "artistLatin": null,
       "year": null,
       "lyricsStatus": "missing",
       "lines": [],
+      "units": [],
       "sources": [],
       "notes": null
     }

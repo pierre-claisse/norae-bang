@@ -5,7 +5,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../src/App";
 import { TOKEN_STORAGE_KEY } from "../src/token/storage";
-import { SHOW_ROMANIZATION_KEY, SHOW_TRANSLATION_KEY } from "../src/ui/lyricPrefs";
 import fixture from "./fixtures/catalog.json";
 
 const TOKEN = "github_pat_fixture_not_a_real_token";
@@ -45,7 +44,8 @@ describe("application", () => {
     render(<App deps={{ fetchImpl }} />);
     await user.type(screen.getByLabelText("Jeton GitHub"), "ghp_notfinegrainedtoken");
     await user.click(screen.getByRole("button", { name: "Enregistrer le jeton" }));
-    expect(screen.getByRole("alert")).toHaveTextContent(/fine-grained/);
+    expect(screen.getByRole("alert")).toHaveTextContent("Ce jeton ne commence pas par github_pat_");
+    expect(screen.getByLabelText("Jeton GitHub")).toHaveAttribute("aria-invalid", "true");
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull();
     expect(fetchImpl).not.toHaveBeenCalled();
   });
@@ -60,7 +60,7 @@ describe("application", () => {
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBe(TOKEN);
     expect(screen.getByText("Chanson exemple")).toBeInTheDocument();
-    expect(screen.getByText("Paroles vérifiées")).toBeInTheDocument();
+    expect(screen.getAllByText("Paroles vérifiées")).toHaveLength(2);
     expect(screen.getByText("Brouillon")).toBeInTheDocument();
     expect(screen.getByText("Paroles manquantes")).toBeInTheDocument();
 
@@ -71,8 +71,9 @@ describe("application", () => {
 
     await user.click(screen.getByRole("link", { name: /Chanson exemple/ }));
     expect(await screen.findByRole("heading", { name: "예시 노래" })).toBeInTheDocument();
-    expect(screen.getByText("Parole exemple")).toBeInTheDocument();
-    expect(screen.getByText("Deuxième ligne exemple")).toBeInTheDocument();
+    expect(screen.getByText("Une seule ligne inventée.")).toBeInTheDocument();
+    expect(screen.getByText(/premier couplet et finit au second/)).toBeInTheDocument();
+    expect(screen.getByText(/Note :/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Source exemple" })).toHaveAttribute(
       "href",
       "https://example.com/source-exemple",
@@ -80,7 +81,7 @@ describe("application", () => {
 
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
     await user.click(await screen.findByRole("link", { name: /Brouillon exemple/ }));
-    expect(await screen.findAllByText("non renseigné")).toHaveLength(2);
+    expect(await screen.findByText("Brouillon d'une ligne inventée.")).toBeInTheDocument();
     expect(screen.getByText(/pas encore été vérifiées/)).toBeInTheDocument();
     expect(screen.getByText("Aucune source indiquée.")).toBeInTheDocument();
 
@@ -134,36 +135,22 @@ describe("application", () => {
       />,
     );
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent(/401/);
+    expect(alert).toHaveTextContent("GitHub refuse ce jeton");
     expect(alert.textContent ?? "").not.toContain(TOKEN);
+    expect(screen.getByLabelText("Jeton GitHub")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText("Jeton GitHub")).toHaveAttribute("aria-describedby", alert.id);
   });
 
-  it("mémorise le masquage de la romanisation et de la traduction", async () => {
-    at("/norae-bang/chanson/chanson-exemple");
+  it("affiche le hangeul seul quand il n’y a pas de traduction", async () => {
+    at("/norae-bang/chanson/sans-traduction");
     window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
-    const user = userEvent.setup();
-    const first = render(<App deps={{ fetchImpl: mockCatalog() }} />);
-    expect(await screen.findByText("Yesi gasa")).toBeInTheDocument();
-    expect(screen.getByText("Parole exemple")).toBeInTheDocument();
-    expect(screen.getAllByText("Coréen")).toHaveLength(1);
-    expect(screen.queryByText("CORÉEN")).toBeNull();
-
-    await user.click(screen.getByRole("button", { name: "Romanisation" }));
-    expect(screen.queryByText("Yesi gasa")).toBeNull();
-    expect(screen.getByText("Parole exemple")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Traduction" }));
-    expect(screen.queryByText("Parole exemple")).toBeNull();
-    expect(screen.getByText("예시 가사")).toBeInTheDocument();
-    expect(window.localStorage.getItem(SHOW_ROMANIZATION_KEY)).toBe("0");
-    expect(window.localStorage.getItem(SHOW_TRANSLATION_KEY)).toBe("0");
-
-    first.unmount();
     render(<App deps={{ fetchImpl: mockCatalog() }} />);
-    expect(await screen.findByText("예시 가사")).toBeInTheDocument();
-    expect(screen.queryByText("Yesi gasa")).toBeNull();
-    expect(screen.queryByText("Parole exemple")).toBeNull();
-    expect(screen.getByRole("button", { name: "Romanisation" })).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByRole("button", { name: "Traduction" })).toHaveAttribute("aria-pressed", "false");
+    expect(await screen.findByText("가나 다라")).toBeInTheDocument();
+    expect(screen.getByText("마바 사아")).toBeInTheDocument();
+    expect(screen.queryByText(/traduire/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Traduction" })).toBeNull();
+    expect(screen.queryByText("Une seule ligne inventée.")).toBeNull();
+    expect(screen.queryByText(/Note :/)).toBeNull();
   });
 
   it("oublie un jeton stocké qui n’a pas le bon format", () => {
