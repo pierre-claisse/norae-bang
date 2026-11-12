@@ -16,30 +16,36 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
   useDocumentTitle("Répertoire · norae-bang");
   const searching = query.trim().length > 0;
   const rowRef = useRef<HTMLDivElement>(null);
-  const [more, setMore] = useState(false);
+  const [edges, setEdges] = useState({ start: false, end: false });
 
   useEffect(() => {
     const row = rowRef.current;
     if (!row) return;
-    if (artist) {
-      const chip = row.querySelector<HTMLElement>(".artist-chip[aria-pressed='true']");
-      chip?.scrollIntoView({ block: "nearest", inline: "center" });
-    }
+    let cancelled = false;
+    const center = () => {
+      if (cancelled || !artist) return;
+      row.querySelector<HTMLElement>(".artist-chip[aria-pressed='true']")?.scrollIntoView({
+        block: "nearest",
+        inline: "center",
+      });
+    };
     const update = () => {
       const last = row.lastElementChild;
-      if (!last) {
-        setMore(false);
-        return;
-      }
       const rowBox = row.getBoundingClientRect();
-      const lastBox = last.getBoundingClientRect();
-      setMore(lastBox.right > rowBox.right + 1);
+      const end = last ? last.getBoundingClientRect().right > rowBox.right + 1 : false;
+      setEdges({ start: row.scrollLeft > 1, end });
     };
+    center();
     update();
+    void document.fonts?.ready.then(() => {
+      center();
+      update();
+    });
     row.addEventListener("scroll", update, { passive: true });
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
     observer?.observe(row);
     return () => {
+      cancelled = true;
       row.removeEventListener("scroll", update);
       observer?.disconnect();
     };
@@ -89,11 +95,12 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
               onClick={() => chooseArtist(choice.name)}
             >
               <span>{choice.name}</span>
-              <span className="artist-count">{choice.count}</span>
+              {choice.count >= 2 ? <span className="artist-count">{choice.count}</span> : null}
             </button>
           ))}
         </div>
-        <span className="artist-fade" data-more={more ? "true" : "false"} aria-hidden="true" />
+        <span className="artist-fade artist-fade-start" data-more={edges.start ? "true" : "false"} aria-hidden="true" />
+        <span className="artist-fade artist-fade-end" data-more={edges.end ? "true" : "false"} aria-hidden="true" />
       </div>
       {filtered.length > 0 ? (
         <p className="count" aria-live="polite">
@@ -163,6 +170,7 @@ function countLabel(count: number): string {
 }
 
 function artistChipLabel(name: string, count: number): string {
+  if (count < 2) return name;
   return `${name}, ${countLabel(count)}`;
 }
 

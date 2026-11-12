@@ -224,8 +224,8 @@ describe("application", () => {
     expect(chips[0]).toBe("Tous");
     expect(chips[1]).toContain("가수 예시");
     expect(chips[1]).toContain("2");
-    expect(chips[2]).toContain("다른 가수");
-    expect(chips[3]).toContain("셋째 그룹");
+    expect(chips[2]).toBe("다른 가수");
+    expect(chips[3]).toBe("셋째 그룹");
     expect(screen.getByRole("button", { name: "Tous" })).toHaveAttribute("aria-pressed", "true");
 
     await user.click(screen.getByRole("button", { name: /가수 예시, 2 chansons/ }));
@@ -270,7 +270,7 @@ describe("application", () => {
     render(<App deps={{ fetchImpl: mockCatalog() }} />);
     expect(await screen.findByRole("link", { name: /Sans paroles/ })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Chanson exemple/ })).toBeNull();
-    expect(screen.getByRole("button", { name: /셋째 그룹, 1 chanson/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "셋째 그룹" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Tous" })).toHaveAttribute("aria-pressed", "false");
     expect(document.querySelector(".count")?.textContent).toBe("1 chanson · 셋째 그룹");
     expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest", inline: "center" });
