@@ -21,8 +21,8 @@ Le fichier est parsé puis passé à `parseCatalog` (`docs/data-schema.md`). Tou
 ## Écrans
 
 - Connexion : lien de création du jeton, dépôt unique, permission Contents en lecture.
-- `/` : liste (titre hangeul, titre français, artiste en hangeul seul, badge), recherche locale.
-- `/chanson/:songId` : hangeul par couplet. Si des unités existent, le français est affiché à côté (ou dessous en mobile), avec la note sous le paragraphe, puis la variante de texte s’il y en a une. Sans unité, seul le hangeul est montré. Le contexte suit l’artiste et l’année. Sources en bas, seulement s’il y a une remarque ou un lien. Message dédié si les paroles manquent.
+- `/` : liste (titre hangeul, titre français, artiste en hangeul seul, badge), recherche locale, filtre par artiste (`?artiste=`). Les puces défilent horizontalement sur un écran étroit. Le filtre se combine avec la recherche.
+- `/chanson/:songId` : hangeul par couplet. Si des unités existent, le français est affiché à côté (ou dessous en mobile), avec la note sous le paragraphe, puis la variante de texte s’il y en a une. Sans unité, seul le hangeul est montré. Le contexte suit l’artiste et l’année. Le nom de l’artiste ouvre la liste filtrée. Le retour au répertoire conserve `?artiste`. Sources en bas, seulement s’il y a une remarque ou un lien. Message dédié si les paroles manquent.
 
 `BrowserRouter` utilise `basename={import.meta.env.BASE_URL}`. Le build copie `dist/index.html` vers `dist/404.html` pour le repli SPA de GitHub Pages.
 

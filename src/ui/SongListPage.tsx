@@ -1,15 +1,26 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { filterSongs } from "../domain/filter";
+import { Link, useSearchParams } from "react-router-dom";
+import { artistChoices, artistQuery, filterSongs } from "../domain/filter";
 import type { Song } from "../domain/schema";
 import { statusLabel } from "../domain/status";
 import { useDocumentTitle } from "./useDocumentTitle";
 
 export function SongListPage({ songs }: { songs: readonly Song[] }) {
   const [query, setQuery] = useState("");
-  const filtered = useMemo(() => filterSongs(songs, query), [songs, query]);
+  const [params, setParams] = useSearchParams();
+  const artistParam = params.get("artiste");
+  const artist = artistParam && artistParam.trim() !== "" ? artistParam : null;
+  const artists = useMemo(() => artistChoices(songs), [songs]);
+  const filtered = useMemo(() => filterSongs(songs, query, artist), [songs, query, artist]);
   useDocumentTitle("Répertoire · norae-bang");
   const searching = query.trim().length > 0;
+
+  function chooseArtist(next: string | null) {
+    const updated = new URLSearchParams(params);
+    if (next) updated.set("artiste", next);
+    else updated.delete("artiste");
+    setParams(updated, { replace: true });
+  }
 
   return (
     <>
@@ -32,13 +43,32 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
           ) : null}
         </div>
       </div>
+      <div className="artist-row" role="group" aria-label="Filtrer par artiste">
+        <button type="button" className="artist-chip" aria-pressed={artist === null} onClick={() => chooseArtist(null)}>
+          Tous
+        </button>
+        {artists.map((choice) => (
+          <button
+            key={choice.name}
+            type="button"
+            className="artist-chip"
+            lang="ko"
+            aria-pressed={artist === choice.name}
+            aria-label={artistChipLabel(choice.name, choice.count)}
+            onClick={() => chooseArtist(choice.name)}
+          >
+            <span>{choice.name}</span>
+            <span className="artist-count">{choice.count}</span>
+          </button>
+        ))}
+      </div>
       {filtered.length > 0 ? (
         <p className="count" aria-live="polite">
           {countLabel(filtered.length)}
         </p>
       ) : (
         <p className="count" aria-live="polite">
-          {searching ? "Aucune chanson ne correspond à cette recherche." : "Le répertoire ne contient encore aucune chanson."}
+          {emptyLabel(searching, artist !== null)}
         </p>
       )}
       {filtered.length === 0 && searching ? (
@@ -50,7 +80,7 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
         <ul className="songs">
           {filtered.map((song) => (
             <li key={song.id}>
-              <Link to={`/chanson/${song.id}`} className="song-card">
+              <Link to={`/chanson/${song.id}${artistQuery(artist)}`} className="song-card">
                 <span className="song-body">
                   <span className="song-heading">
                     <span className="song-title" lang="ko">
@@ -91,4 +121,14 @@ function Chevron() {
 function countLabel(count: number): string {
   if (count === 1) return "1 chanson";
   return `${count} chansons`;
+}
+
+function artistChipLabel(name: string, count: number): string {
+  return `${name}, ${countLabel(count)}`;
+}
+
+function emptyLabel(searching: boolean, filteringArtist: boolean): string {
+  if (searching) return "Aucune chanson ne correspond à cette recherche.";
+  if (filteringArtist) return "Aucune chanson pour cet artiste.";
+  return "Le répertoire ne contient encore aucune chanson.";
 }
