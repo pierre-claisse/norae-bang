@@ -199,7 +199,7 @@ input[type="search"]::-webkit-search-decoration {
 }
 
 .brand-mark {
-  font-size: 1.375rem;
+  font-size: 22px;
 }
 
 .gate-card ol {
@@ -271,7 +271,7 @@ button.clear-search {
 .count,
 .colophon,
 .unit-note,
-.notes {
+.sources-note {
   color: var(--muted);
 }
 
@@ -295,6 +295,7 @@ button.clear-search {
 
 .brand {
   color: var(--brass);
+  font-size: 22px;
   text-decoration: none;
 }
 
@@ -490,10 +491,14 @@ button.token-link:hover {
   font-size: 0.92rem;
 }
 
-.notes {
-  margin-top: 0.85rem;
-  padding-left: 0.75rem;
-  border-left: 2px solid var(--line);
+.song-context {
+  margin-top: 0.55rem;
+  line-height: 1.4;
+  line-clamp: 2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .banner,
@@ -553,6 +558,10 @@ button.token-link:hover {
   font-size: 1.3125rem;
   font-weight: 500;
   line-height: 1.45;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  padding-left: 1em;
+  text-indent: -1em;
 }
 
 .unit-fr {
@@ -573,9 +582,18 @@ button.token-link:hover {
   width: 100%;
 }
 
+.sources-note {
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
 .sources ul {
   margin: 0.6rem 0 0;
   padding-left: 1.1rem;
+}
+
+.sources-note + ul {
+  margin-top: 0.75rem;
 }
 
 .sources a {

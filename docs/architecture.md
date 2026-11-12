@@ -22,7 +22,7 @@ Le fichier est parsé puis passé à `parseCatalog` (`docs/data-schema.md`). Tou
 
 - Connexion : lien de création du jeton, dépôt unique, permission Contents en lecture.
 - `/` : liste (titre hangeul, titre français, artiste, badge), recherche locale.
-- `/chanson/:songId` : hangeul par couplet. Si des unités existent, le français est affiché à côté (ou dessous en mobile), avec la note sous le paragraphe. Sans unité, seul le hangeul est montré. Sources en bas. Message dédié si les paroles manquent.
+- `/chanson/:songId` : hangeul par couplet. Si des unités existent, le français est affiché à côté (ou dessous en mobile), avec la note sous le paragraphe. Sans unité, seul le hangeul est montré. Le contexte est sous le titre. Sources en bas, seulement s’il y a une remarque ou un lien. Message dédié si les paroles manquent.
 
 `BrowserRouter` utilise `basename={import.meta.env.BASE_URL}`. Le build copie `dist/index.html` vers `dist/404.html` pour le repli SPA de GitHub Pages.
 

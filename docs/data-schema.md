@@ -34,7 +34,15 @@ L’API GitHub Contents ne renvoie pas un fichier de plus de 1 Mo. `songs.json` 
 | `lines` | tableau | voir ci-dessous, peut être vide, dans l’ordre chanté |
 | `units` | tableau | voir ci-dessous, peut être vide |
 | `sources` | tableau | voir ci-dessous, peut être vide |
-| `notes` | chaîne ou `null` | non vide si présente |
+| `context` | chaîne ou `null` | phrase courte, 200 caractères au plus. Non vide si présente |
+| `sourcesNote` | chaîne ou `null` | remarques de vérification. Non vide si présente |
+| `notes` | chaîne ou `null`, clé optionnelle | déprécié. Voir ci-dessous |
+
+`context` et `sourcesNote` sont les champs courants. Ils sont présents et valent `null` quand il n’y a rien à dire. `notes` peut être absent. S’il est présent, le validateur accepte la chanson et émet un avertissement de dépréciation (`clé dépréciée, utiliser context et sourcesNote`). Si `context` et `sourcesNote` sont tous les deux absents, `notes` suffit et les deux nouveaux champs valent `null`. S’il manque les trois, la validation échoue.
+
+Ce remplacement ne change pas `schemaVersion` : ce n’est pas un corpus publié.
+
+Affichage : `context` est montré sous le titre, sur une ou deux lignes. `sourcesNote` est montré en bas, dans la section « Sources », en texte secondaire, avec les liens `sources`. La section n’apparaît que si `sourcesNote`, `sources` ou un `notes` encore affiché a un contenu. Si `context` et `sourcesNote` sont vides et que `notes` a un texte, ce texte est affiché dans « Sources ».
 
 Il n’y a pas de romanisation. Le site n’en affiche pas et n’en produit pas.
 
