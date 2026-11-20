@@ -639,12 +639,17 @@ a.artist-link {
   background: var(--brass);
 }
 
+.lyric-ko,
+.sources-note,
+.sources a {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
 .lyric-ko {
   font-size: 1.3125rem;
   font-weight: 500;
   line-height: 1.45;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
   padding-left: 1em;
   text-indent: -1em;
 }
@@ -685,10 +690,6 @@ a.artist-link {
 
 .sources-note + ul {
   margin-top: 0.75rem;
-}
-
-.sources a {
-  overflow-wrap: anywhere;
 }
 
 @media (max-width: 700px) {
