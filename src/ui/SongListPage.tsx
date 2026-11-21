@@ -256,40 +256,41 @@ function DirectorySection({
   const headingId = useId();
   return (
     <section className="directory-section" aria-labelledby={headingId}>
-      <h2 id={headingId} lang={section.label === "#" ? undefined : "ko"}>
-        {section.label}
-      </h2>
-      <ul className="songs">
+      <ol className="songs tiles">
+        <li className="tile-section">
+          <h2 id={headingId} lang={section.label === "#" ? undefined : "ko"}>
+            {section.label}
+          </h2>
+        </li>
         {section.songs.map((song) => (
           <li key={song.id}>
-            <Link to={songPath(song.id, liveQuery)} className="song-row" onClick={onOpen}>
-              <span className="song-line">
-                <span className="song-title" lang="ko">
-                  {song.title}
-                </span>
-                <RowStatus status={song.lyricsStatus} />
-              </span>
-              <SongSub song={song} sort={sort} />
-            </Link>
+            <Tile song={song} sort={sort} to={songPath(song.id, liveQuery)} onOpen={onOpen} />
           </li>
         ))}
-      </ul>
+      </ol>
     </section>
   );
 }
 
-function SongSub({ song, sort }: { song: Song; sort: SongSort }) {
+function Tile({ song, sort, to, onOpen }: { song: Song; sort: SongSort; to: string; onOpen: () => void }) {
   const parts = sublineTail(song, sort);
-  if (parts.length === 0) return null;
   return (
-    <span className="song-sub">
-      {parts.map((part, index) => (
-        <Fragment key={part.key}>
-          {index > 0 ? <PartSep /> : null}
-          {part.node}
-        </Fragment>
-      ))}
-    </span>
+    <Link to={to} className="tile" onClick={onOpen}>
+      <span className={song.lyricsStatus === "verified" ? "tile-title" : "tile-title has-badge"} lang="ko">
+        {song.title}
+      </span>
+      {parts.length > 0 ? (
+        <span className="tile-meta">
+          {parts.map((part, index) => (
+            <Fragment key={part.key}>
+              {index > 0 ? <PartSep /> : null}
+              {part.node}
+            </Fragment>
+          ))}
+        </span>
+      ) : null}
+      <RowStatus status={song.lyricsStatus} />
+    </Link>
   );
 }
 
