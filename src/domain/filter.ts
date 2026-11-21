@@ -32,8 +32,19 @@ export function filterSongs(songs: readonly Song[], query: string, artist: strin
 }
 
 export function parseSort(value: string | null): SongSort {
-  if (value === "artiste") return "artiste";
-  return "titre";
+  switch (value) {
+    case "titre-desc":
+    case "artiste":
+    case "artiste-desc":
+    case "annee":
+    case "annee-desc":
+      return value;
+    case "titre":
+    case null:
+      return "titre";
+    default:
+      return "titre";
+  }
 }
 
 export function listQueryFromParams(params: URLSearchParams): ListQuery {
@@ -49,7 +60,7 @@ export function listSearchParams(query: ListQuery): URLSearchParams {
   const params = new URLSearchParams();
   const q = query.q.trim();
   if (q) params.set("q", q);
-  if (query.tri === "artiste") params.set("tri", "artiste");
+  if (query.tri !== "titre") params.set("tri", query.tri);
   if (query.artiste) params.set("artiste", query.artiste);
   return params;
 }

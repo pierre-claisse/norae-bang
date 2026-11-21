@@ -49,8 +49,13 @@ describe("recherche", () => {
   it("aligne q, tri et artiste sur l’URL, dans cet ordre", () => {
     expect(parseSort(null)).toBe("titre");
     expect(parseSort("titre")).toBe("titre");
+    expect(parseSort("titre-desc")).toBe("titre-desc");
     expect(parseSort("artiste")).toBe("artiste");
+    expect(parseSort("artiste-desc")).toBe("artiste-desc");
+    expect(parseSort("annee")).toBe("annee");
+    expect(parseSort("annee-desc")).toBe("annee-desc");
     expect(parseSort("autre")).toBe("titre");
+    expect(parseSort("")).toBe("titre");
 
     const path = listPath({ q: "déjà vu", tri: "artiste", artiste: "가수 예시" });
     const params = new URLSearchParams(path.slice(2));
@@ -59,7 +64,18 @@ describe("recherche", () => {
     expect(params.get("tri")).toBe("artiste");
     expect(params.get("artiste")).toBe("가수 예시");
     expect(listPath({ q: "  ", tri: "titre", artiste: null })).toBe("/");
+    expect(listPath({ q: "", tri: "titre-desc", artiste: null })).toBe("/?tri=titre-desc");
+    expect(listPath({ q: "", tri: "annee", artiste: null })).toBe("/?tri=annee");
+    expect(listPath({ q: "", tri: "annee-desc", artiste: null })).toBe("/?tri=annee-desc");
+    const descending = new URLSearchParams(listPath({ q: "a", tri: "artiste-desc", artiste: "가수 예시" }).slice(2));
+    expect([...descending.keys()]).toEqual(["q", "tri", "artiste"]);
+    expect(descending.get("tri")).toBe("artiste-desc");
+    expect(descending.get("artiste")).toBe("가수 예시");
     expect(songPath("chanson-exemple", { q: "a", tri: "titre", artiste: null })).toBe("/chanson/chanson-exemple?q=a");
+    expect(songPath("chanson-exemple", { q: "", tri: "annee-desc", artiste: null })).toBe(
+      "/chanson/chanson-exemple?tri=annee-desc",
+    );
     expect(listScrollKey("/norae-bang/", { q: "a", tri: "artiste", artiste: null })).toBe("/norae-bang/?q=a&tri=artiste");
+    expect(listScrollKey("/norae-bang/", { q: "", tri: "annee", artiste: null })).toBe("/norae-bang/?tri=annee");
   });
 });

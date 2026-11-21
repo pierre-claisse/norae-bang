@@ -1,7 +1,11 @@
 import type { Song } from "./schema";
 
-export const SONG_SORTS = ["titre", "artiste"] as const;
+export const SONG_SORTS = ["titre", "titre-desc", "artiste", "artiste-desc", "annee", "annee-desc"] as const;
 export type SongSort = (typeof SONG_SORTS)[number];
+export type SortKey = "titre" | "artiste" | "annee";
+export type SortDirection = "asc" | "desc";
+
+export const UNKNOWN_YEAR_LABEL = "Année inconnue";
 
 const CHOSEONG = [
   "ㄱ",
@@ -30,6 +34,7 @@ const SECTION_ORDER = ["ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅅ", "ㅇ", "
 export type SongSection = {
   id: string;
   label: string;
+  lang?: "ko" | "fr";
   songs: Song[];
 };
 
@@ -40,12 +45,17 @@ export function titleInitial(title: string): string {
   return CHOSEONG[index] ?? "#";
 }
 
-export function groupSongs(songs: readonly Song[], sort: SongSort): SongSection[] {
+export function sortKey(sort: SongSort): SortKey {
   switch (sort) {
     case "titre":
-      return groupByInitial(songs);
+    case "titre-desc":
+      return "titre";
     case "artiste":
-      return groupByArtist(songs);
+    case "artiste-desc":
+      return "artiste";
+    case "annee":
+    case "annee-desc":
+      return "annee";
     default: {
       const unexpected: never = sort;
       return unexpected;
@@ -53,35 +63,143 @@ export function groupSongs(songs: readonly Song[], sort: SongSort): SongSection[
   }
 }
 
-function groupByInitial(songs: readonly Song[]): SongSection[] {
+export function sortDirection(sort: SongSort): SortDirection {
+  switch (sort) {
+    case "titre":
+    case "artiste":
+    case "annee":
+      return "asc";
+    case "titre-desc":
+    case "artiste-desc":
+    case "annee-desc":
+      return "desc";
+    default: {
+      const unexpected: never = sort;
+      return unexpected;
+    }
+  }
+}
+
+export function nextSort(current: SongSort, key: SortKey): SongSort {
+  if (sortKey(current) !== key || sortDirection(current) === "desc") return ascending(key);
+  return descending(key);
+}
+
+export function groupSongs(songs: readonly Song[], sort: SongSort): SongSection[] {
+  const direction = sortDirection(sort);
+  const key = sortKey(sort);
+  switch (key) {
+    case "titre":
+      return groupByInitial(songs, direction);
+    case "artiste":
+      return groupByArtist(songs, direction);
+    case "annee":
+      return groupByYear(songs, direction);
+    default: {
+      const unexpected: never = key;
+      return unexpected;
+    }
+  }
+}
+
+function groupByInitial(songs: readonly Song[], direction: SortDirection): SongSection[] {
   const buckets = new Map<string, Song[]>();
-  for (const song of [...songs].sort(byTitle)) {
+  for (const song of [...songs].sort((a, b) => byTitle(a, b, direction))) {
     const label = titleInitial(song.title);
     const list = buckets.get(label);
     if (list) list.push(song);
     else buckets.set(label, [song]);
   }
-  return SECTION_ORDER.filter((label) => buckets.has(label)).map((label) => ({
+  const letters = SECTION_ORDER.filter((label) => label !== "#" && buckets.has(label));
+  const ordered = direction === "asc" ? letters : [...letters].reverse();
+  const labels = buckets.has("#") ? [...ordered, "#"] : ordered;
+  return labels.map((label) => ({
     id: label,
     label,
+    ...(label === "#" ? {} : { lang: "ko" as const }),
     songs: buckets.get(label) ?? [],
   }));
 }
 
-function groupByArtist(songs: readonly Song[]): SongSection[] {
+function groupByArtist(songs: readonly Song[], direction: SortDirection): SongSection[] {
   const buckets = new Map<string, Song[]>();
   for (const song of songs) {
     const list = buckets.get(song.artist);
     if (list) list.push(song);
     else buckets.set(song.artist, [song]);
   }
-  return [...buckets.keys()].sort((a, b) => a.localeCompare(b, "ko")).map((artist) => ({
+  const names = [...buckets.keys()].sort((a, b) => a.localeCompare(b, "ko"));
+  const ordered = direction === "asc" ? names : [...names].reverse();
+  return ordered.map((artist) => ({
     id: artist,
     label: artist,
-    songs: [...(buckets.get(artist) ?? [])].sort(byTitle),
+    lang: "ko" as const,
+    songs: [...(buckets.get(artist) ?? [])].sort((a, b) => byTitle(a, b, "asc")),
   }));
 }
 
-function byTitle(a: Song, b: Song): number {
-  return a.title.localeCompare(b.title, "ko") || a.id.localeCompare(b.id, "ko");
+function groupByYear(songs: readonly Song[], direction: SortDirection): SongSection[] {
+  const buckets = new Map<number, Song[]>();
+  const unknown: Song[] = [];
+  for (const song of songs) {
+    if (song.year === null) {
+      unknown.push(song);
+      continue;
+    }
+    const list = buckets.get(song.year);
+    if (list) list.push(song);
+    else buckets.set(song.year, [song]);
+  }
+  const years = [...buckets.keys()].sort((a, b) => a - b);
+  const ordered = direction === "asc" ? years : [...years].reverse();
+  const sections: SongSection[] = ordered.map((year) => ({
+    id: String(year),
+    label: String(year),
+    songs: [...(buckets.get(year) ?? [])].sort((a, b) => byTitle(a, b, "asc")),
+  }));
+  if (unknown.length > 0) {
+    sections.push({
+      id: "annee-inconnue",
+      label: UNKNOWN_YEAR_LABEL,
+      lang: "fr",
+      songs: [...unknown].sort((a, b) => byTitle(a, b, "asc")),
+    });
+  }
+  return sections;
+}
+
+function ascending(key: SortKey): SongSort {
+  switch (key) {
+    case "titre":
+      return "titre";
+    case "artiste":
+      return "artiste";
+    case "annee":
+      return "annee";
+    default: {
+      const unexpected: never = key;
+      return unexpected;
+    }
+  }
+}
+
+function descending(key: SortKey): SongSort {
+  switch (key) {
+    case "titre":
+      return "titre-desc";
+    case "artiste":
+      return "artiste-desc";
+    case "annee":
+      return "annee-desc";
+    default: {
+      const unexpected: never = key;
+      return unexpected;
+    }
+  }
+}
+
+function byTitle(a: Song, b: Song, direction: SortDirection): number {
+  const title = a.title.localeCompare(b.title, "ko");
+  if (title !== 0) return direction === "asc" ? title : -title;
+  return a.id.localeCompare(b.id, "ko");
 }
