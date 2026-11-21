@@ -645,11 +645,19 @@ describe("application", () => {
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
 
     const ga = screen.getByRole("link", { name: /가나/ });
-    expect(fireEvent.contextMenu(ga)).toBe(false);
+    const mouseMenu = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+    ga.dispatchEvent(mouseMenu);
+    expect(mouseMenu.defaultPrevented).toBe(false);
+
+    fireEvent.pointerDown(ga, { pointerType: "touch", button: 0, clientX: 20, clientY: 30, pointerId: 7 });
+    const touchMenu = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+    expect(ga.dispatchEvent(touchMenu)).toBe(false);
+    expect(touchMenu.defaultPrevented).toBe(true);
+    fireEvent.pointerUp(ga, { pointerType: "touch", button: 0, clientX: 20, clientY: 30, pointerId: 7 });
 
     vi.useFakeTimers();
     try {
-      fireEvent.pointerDown(ga, { clientX: 20, clientY: 30, button: 0, pointerId: 1 });
+      fireEvent.pointerDown(ga, { pointerType: "touch", clientX: 20, clientY: 30, button: 0, pointerId: 1 });
       await act(async () => {
         await vi.advanceTimersByTimeAsync(499);
       });

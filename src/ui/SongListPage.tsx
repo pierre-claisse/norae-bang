@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
@@ -417,6 +418,7 @@ function Tile({
   const longPress = useLongPress(onToggleFavorite);
   return (
     <Link
+      ref={longPress.linkRef}
       to={to}
       className={favorite ? "tile is-favorite" : "tile"}
       draggable={false}
@@ -428,7 +430,7 @@ function Tile({
         onOpen();
       }}
       onPointerDown={longPress.onPointerDown}
-      onContextMenu={(event) => event.preventDefault()}
+      onContextMenu={longPress.onContextMenu}
     >
       <span className="tile-heart" aria-hidden="true">
         <HeartIcon filled />
@@ -453,14 +455,31 @@ function Tile({
 }
 
 function useLongPress(onLongPress: () => void) {
+  const linkRef = useRef<HTMLAnchorElement>(null);
   const timer = useRef<number | null>(null);
   const longPressed = useRef(false);
+  const touchGesture = useRef(false);
   const stopListening = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    const node = linkRef.current;
+    if (!node) return;
+    // Capture native : Chrome, Brave et Samsung Internet décident du menu
+    // du lien après cet événement. preventDefault n’est honoré que s’il est
+    // synchrone, et seulement pour un geste tactile.
+    const blockTouchMenu = (event: Event) => {
+      if (!touchGesture.current) return;
+      event.preventDefault();
+    };
+    node.addEventListener("contextmenu", blockTouchMenu);
+    node.addEventListener("selectstart", blockTouchMenu);
+    node.addEventListener("dragstart", blockTouchMenu);
     return () => {
       if (timer.current !== null) window.clearTimeout(timer.current);
       stopListening.current?.();
+      node.removeEventListener("contextmenu", blockTouchMenu);
+      node.removeEventListener("selectstart", blockTouchMenu);
+      node.removeEventListener("dragstart", blockTouchMenu);
     };
   }, []);
 
@@ -471,33 +490,45 @@ function useLongPress(onLongPress: () => void) {
   }
 
   function onPointerDown(event: ReactPointerEvent<HTMLAnchorElement>) {
+    touchGesture.current = event.pointerType === "touch";
     if (event.button !== 0) return;
     longPressed.current = false;
     stopListening.current?.();
     const originX = event.clientX;
     const originY = event.clientY;
     const pointerId = event.pointerId;
-    const stop = () => {
+    const releaseTouch = () => {
+      // Le contextmenu Android arrive parfois juste après la fin du toucher.
+      window.setTimeout(() => {
+        touchGesture.current = false;
+      }, 0);
+    };
+    const finish = () => {
       clearTimer();
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", stop);
+      window.removeEventListener("pointercancel", onCancel);
       stopListening.current = null;
+      releaseTouch();
     };
     const onMove = (move: PointerEvent) => {
       if (move.pointerId !== pointerId) return;
       const dx = move.clientX - originX;
       const dy = move.clientY - originY;
-      if (dx * dx + dy * dy > LONG_PRESS_MOVE_PX * LONG_PRESS_MOVE_PX) stop();
+      if (dx * dx + dy * dy > LONG_PRESS_MOVE_PX * LONG_PRESS_MOVE_PX) clearTimer();
     };
     const onUp = (up: PointerEvent) => {
       if (up.pointerId !== pointerId) return;
-      stop();
+      finish();
     };
-    stopListening.current = stop;
+    const onCancel = (cancel: PointerEvent) => {
+      if (cancel.pointerId !== pointerId) return;
+      finish();
+    };
+    stopListening.current = finish;
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", stop);
+    window.addEventListener("pointercancel", onCancel);
     timer.current = window.setTimeout(() => {
       timer.current = null;
       longPressed.current = true;
@@ -516,7 +547,12 @@ function useLongPress(onLongPress: () => void) {
     return true;
   }
 
-  return { onPointerDown, consumeClick };
+  function onContextMenu(event: ReactMouseEvent<HTMLAnchorElement>) {
+    if (!touchGesture.current) return;
+    event.preventDefault();
+  }
+
+  return { linkRef, onPointerDown, consumeClick, onContextMenu };
 }
 
 function sublineTail(song: Song, sort: SongSort): Array<{ key: string; node: ReactNode }> {
