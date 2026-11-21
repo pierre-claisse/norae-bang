@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { listPath, listQueryFromParams } from "../domain/filter";
 import { frenchTypography } from "../domain/french";
@@ -29,6 +30,18 @@ function SongDetail({ song }: { song: Song }) {
   const listQuery = listQueryFromParams(params);
   const view = lyricView(song);
   const favorites = useFavorites();
+  const favorite = favorites.ids.has(song.id);
+  const favoriteRef = useRef<HTMLButtonElement>(null);
+  const restoreFocus = useRef(false);
+  useLayoutEffect(() => {
+    if (!restoreFocus.current) return;
+    restoreFocus.current = false;
+    favoriteRef.current?.focus();
+  }, [favorite]);
+  function toggleFavorite() {
+    restoreFocus.current = true;
+    favorites.toggle(song.id);
+  }
   return (
     <article className="song">
       <BackLink />
@@ -38,14 +51,23 @@ function SongDetail({ song }: { song: Song }) {
           <span className="badge" data-status={song.lyricsStatus}>
             {statusLabel(song.lyricsStatus)}
           </span>
-          {favorites.ids.has(song.id) ? (
+          {favorite ? (
             <FavoriteButton
               className="badge song-favorite"
               pressed
               title={song.title}
-              onToggle={() => favorites.toggle(song.id)}
+              buttonRef={favoriteRef}
+              onToggle={toggleFavorite}
             />
-          ) : null}
+          ) : (
+            <FavoriteButton
+              className="song-favorite-add"
+              pressed={false}
+              title={song.title}
+              buttonRef={favoriteRef}
+              onToggle={toggleFavorite}
+            />
+          )}
         </div>
         {song.titleFr ? (
           <p className="title-fr" lang="fr">

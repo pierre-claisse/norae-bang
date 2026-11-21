@@ -549,7 +549,10 @@ describe("application", () => {
     expect(document.querySelector(".tile.is-favorite")).toBeNull();
 
     await user.click(screen.getByRole("link", { name: /가나/ }));
-    expect(screen.queryByRole("button", { name: "Favori, 가나" })).toBeNull();
+    const addGa = screen.getByRole("button", { name: "Favori, 가나" });
+    expect(addGa).toHaveAttribute("aria-pressed", "false");
+    expect(addGa.classList.contains("song-favorite-add")).toBe(true);
+    expect(addGa.classList.contains("song-favorite")).toBe(false);
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
     await holdTile(await screen.findByRole("link", { name: /가나/ }));
     const ga = screen.getByRole("link", { name: /가나/ });
@@ -596,7 +599,10 @@ describe("application", () => {
     expect(artistParams.get("artiste")).toBe("가수 가");
 
     await user.click(remove);
-    expect(screen.queryByRole("button", { name: "Favori, 가나" })).toBeNull();
+    const addAgain = screen.getByRole("button", { name: "Favori, 가나" });
+    expect(addAgain).toHaveAttribute("aria-pressed", "false");
+    expect(addAgain.classList.contains("song-favorite-add")).toBe(true);
+    expect(addAgain.classList.contains("song-favorite")).toBe(false);
     expect(JSON.parse(window.localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "null")).toEqual(["da"]);
 
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
@@ -621,7 +627,7 @@ describe("application", () => {
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
     expect(document.querySelector(".count")?.textContent).toBe(
-      "Aucun favori. Appui long sur une tuile, ou le bouton sur la fiche.",
+      "Aucun favori. Appui long sur une tuile pour en ajouter un.",
     );
     await user.click(screen.getByRole("button", { name: /가수 가, 2 chansons/ }));
     expect(document.querySelector(".count")?.textContent).toBe("Aucun favori pour cet artiste.");
@@ -701,12 +707,27 @@ describe("application", () => {
       vi.useRealTimers();
     }
     expect(screen.queryByRole("link", { name: /가나/ })).toBeNull();
-    expect(screen.getByText("Aucun favori. Appui long sur une tuile, ou le bouton sur la fiche.")).toBeInTheDocument();
+    expect(screen.getByText("Aucun favori. Appui long sur une tuile pour en ajouter un.")).toBeInTheDocument();
     expect(screen.getByText("Retiré des favoris")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Favoris" }));
     await user.click(screen.getByRole("link", { name: /나나/ }));
     expect(await screen.findByRole("heading", { name: "나나" })).toBeInTheDocument();
+    const addNa = screen.getByRole("button", { name: "Favori, 나나" });
+    expect(addNa).toHaveAttribute("aria-pressed", "false");
+    addNa.focus();
+    await user.keyboard("{Enter}");
+    const markedNa = screen.getByRole("button", { name: "Favori, 나나" });
+    expect(markedNa).toHaveAttribute("aria-pressed", "true");
+    expect(markedNa.classList.contains("song-favorite")).toBe(true);
+    expect(markedNa).toHaveFocus();
+    expect(JSON.parse(window.localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "null")).toEqual(["na"]);
+    await user.keyboard("{Enter}");
+    const restoredNa = screen.getByRole("button", { name: "Favori, 나나" });
+    expect(restoredNa).toHaveAttribute("aria-pressed", "false");
+    expect(restoredNa.classList.contains("song-favorite-add")).toBe(true);
+    expect(restoredNa).toHaveFocus();
+    expect(window.localStorage.getItem(FAVORITES_STORAGE_KEY)).toBe("[]");
   });
 
   it("oublie un jeton stocké qui n’a pas le bon format", () => {

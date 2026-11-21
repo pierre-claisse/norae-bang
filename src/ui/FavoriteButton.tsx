@@ -1,16 +1,21 @@
+import type { Ref } from "react";
+
 export function FavoriteButton({
   pressed,
   title,
   onToggle,
   className,
+  buttonRef,
 }: {
   pressed: boolean;
   title: string;
   onToggle: () => void;
   className: string;
+  buttonRef?: Ref<HTMLButtonElement>;
 }) {
   return (
     <button
+      ref={buttonRef}
       type="button"
       className={className}
       aria-pressed={pressed}

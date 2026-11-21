@@ -115,7 +115,44 @@ describe("tuiles du répertoire", () => {
     expect(css).toContain("-webkit-touch-callout: none");
     expect(css).toMatch(/button\.song-favorite::after\s*\{[^}]*inset:\s*calc\(\(1\.6rem - 44px\) \/ 2\) 0/);
   });
+
+  it("n’occupe pas de place avec le bouton d’ajout tant qu’il n’a pas le focus clavier", () => {
+    document.head.append(Object.assign(document.createElement("style"), { textContent: css }));
+    const withAdd = titleRow(true);
+    const withoutAdd = titleRow(false);
+    document.body.append(withAdd, withoutAdd);
+    const add = withAdd.querySelector("button");
+    if (!add) throw new Error("bouton introuvable");
+    expect(withAdd.getBoundingClientRect().height).toBe(withoutAdd.getBoundingClientRect().height);
+    const style = getComputedStyle(add);
+    expect(style.position).toBe("absolute");
+    expect(style.pointerEvents).toBe("none");
+    expect(style.width).toBe("1px");
+    expect(style.height).toBe("1px");
+    expect(css).toMatch(/button\.song-favorite-add:focus-visible\s*\{[^}]*pointer-events:\s*auto/);
+    expect(css).toMatch(/button\.song-favorite-add:focus-visible\s*\{[^}]*min-height:\s*1\.6rem/);
+  });
 });
+
+function titleRow(withAdd: boolean): HTMLDivElement {
+  const row = document.createElement("div");
+  row.className = "song-title-row";
+  row.style.width = "380px";
+  const title = document.createElement("h1");
+  title.textContent = "가나";
+  const badge = document.createElement("span");
+  badge.className = "badge";
+  badge.textContent = "Paroles vérifiées";
+  row.append(title, badge);
+  if (withAdd) {
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "song-favorite-add";
+    add.textContent = "Favori";
+    row.append(add);
+  }
+  return row;
+}
 
 function sampleTile(favorite: boolean): HTMLLIElement {
   const cell = document.createElement("li");

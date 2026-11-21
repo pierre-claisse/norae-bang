@@ -851,6 +851,7 @@ button.favorite-filter[aria-pressed="true"] {
 }
 
 .song-title-row {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -868,6 +869,51 @@ button.song-favorite {
 }
 
 button.song-favorite::after {
+  content: "";
+  position: absolute;
+  inset: calc((1.6rem - 44px) / 2) 0;
+}
+
+button.song-favorite-add {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+button.song-favorite-add:focus-visible {
+  position: relative;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-height: 1.6rem;
+  margin: 0;
+  padding: 0.1rem 0.5rem;
+  overflow: visible;
+  clip-path: none;
+  border: 1px solid var(--field);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-family: Archivo, Pretendard, sans-serif;
+  font-weight: 600;
+  font-stretch: 112%;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+button.song-favorite-add:focus-visible::after {
   content: "";
   position: absolute;
   inset: calc((1.6rem - 44px) / 2) 0;

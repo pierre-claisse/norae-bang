@@ -634,7 +634,7 @@ function artistChipLabel(name: string, count: number): string {
 function emptyLabel(searching: boolean, filteringArtist: boolean, favoritesOnly: boolean): string {
   if (searching) return "Aucune chanson ne correspond à cette recherche.";
   if (favoritesOnly && filteringArtist) return "Aucun favori pour cet artiste.";
-  if (favoritesOnly) return "Aucun favori. Appui long sur une tuile, ou le bouton sur la fiche.";
+  if (favoritesOnly) return "Aucun favori. Appui long sur une tuile pour en ajouter un.";
   if (filteringArtist) return "Aucune chanson pour cet artiste.";
   return "Le répertoire ne contient encore aucune chanson.";
 }
