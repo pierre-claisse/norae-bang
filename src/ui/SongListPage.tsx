@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   artistChoices,
@@ -10,7 +10,7 @@ import {
 } from "../domain/filter";
 import { frenchTypography } from "../domain/french";
 import type { LyricsStatus, Song } from "../domain/schema";
-import { groupSongs, type SongSort } from "../domain/sections";
+import { groupSongs, type SongSection, type SongSort } from "../domain/sections";
 import { useDocumentTitle } from "./useDocumentTitle";
 
 const QUERY_DEBOUNCE_MS = 150;
@@ -237,40 +237,105 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
         </button>
       ) : null}
       {sections.map((section) => (
-        <section className="directory-section" key={section.id}>
-          <h2 lang={section.label === "#" ? undefined : "ko"}>{section.label}</h2>
-          <ul className="songs">
-            {section.songs.map((song) => (
-              <li key={song.id}>
-                <Link to={songPath(song.id, liveQuery)} className="song-row" onClick={rememberScroll}>
-                  <span className="song-line">
-                    <span className="song-title" lang="ko">
-                      {song.title}
-                    </span>
-                    <RowStatus status={song.lyricsStatus} />
-                  </span>
-                  <span className="song-sub">
-                    <span className="title-fr" lang={song.titleFr ? "fr" : undefined}>
-                      {song.titleFr ? frenchTypography(song.titleFr) : ""}
-                    </span>
-                    <span className="song-byline">
-                      {song.titleFr ? <span aria-hidden="true"> · </span> : null}
-                      <span lang="ko">{song.artist}</span>
-                      {song.year !== null ? (
-                        <>
-                          <span aria-hidden="true"> · </span>
-                          <span className="song-year">{song.year}</span>
-                        </>
-                      ) : null}
-                    </span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <DirectorySection key={section.id} section={section} sort={sort} liveQuery={liveQuery} onOpen={rememberScroll} />
       ))}
     </div>
+  );
+}
+
+function DirectorySection({
+  section,
+  sort,
+  liveQuery,
+  onOpen,
+}: {
+  section: SongSection;
+  sort: SongSort;
+  liveQuery: ListQuery;
+  onOpen: () => void;
+}) {
+  const headingId = useId();
+  return (
+    <section className="directory-section" aria-labelledby={headingId}>
+      <h2 id={headingId} lang={section.label === "#" ? undefined : "ko"}>
+        {section.label}
+      </h2>
+      <ul className="songs">
+        {section.songs.map((song) => (
+          <li key={song.id}>
+            <Link to={songPath(song.id, liveQuery)} className="song-row" onClick={onOpen}>
+              <span className="song-line">
+                <span className="song-title" lang="ko">
+                  {song.title}
+                </span>
+                <RowStatus status={song.lyricsStatus} />
+              </span>
+              <SongSub song={song} sort={sort} />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function SongSub({ song, sort }: { song: Song; sort: SongSort }) {
+  const title = song.titleFr ? frenchTypography(song.titleFr) : null;
+  const tail = sublineTail(song, sort);
+  if (!title && tail.length === 0) return null;
+  return (
+    <span className="song-sub">
+      {title ? (
+        <span className="title-fr" lang="fr">
+          {title}
+        </span>
+      ) : null}
+      {tail.length > 0 ? (
+        <span className="song-byline">
+          {title ? <PartSep /> : null}
+          {tail.map((part, index) => (
+            <Fragment key={part.key}>
+              {index > 0 ? <PartSep /> : null}
+              {part.node}
+            </Fragment>
+          ))}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+function sublineTail(song: Song, sort: SongSort): Array<{ key: string; node: ReactNode }> {
+  const parts: Array<{ key: string; node: ReactNode }> = [];
+  switch (sort) {
+    case "titre":
+      parts.push({
+        key: "artist",
+        node: <span lang="ko">{song.artist}</span>,
+      });
+      break;
+    case "artiste":
+      break;
+    default: {
+      const unexpected: never = sort;
+      return unexpected;
+    }
+  }
+  if (song.year !== null) {
+    parts.push({
+      key: "year",
+      node: <span className="song-year">{song.year}</span>,
+    });
+  }
+  return parts;
+}
+
+function PartSep() {
+  return (
+    <>
+      <span className="sr-only">, </span>
+      <span aria-hidden="true"> · </span>
+    </>
   );
 }
 
