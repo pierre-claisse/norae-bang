@@ -39,7 +39,11 @@ describe("tuiles du répertoire", () => {
     expect(css).toMatch(/\.tile-title\s*\{[^}]*-webkit-line-clamp:\s*2/);
     expect(css).toMatch(/\.tile-title\s*\{[^}]*word-break:\s*keep-all/);
     expect(getComputedStyle(title).wordBreak).toBe("keep-all");
-    expect(getComputedStyle(title).paddingRight).toBe("96px");
+    expect(getComputedStyle(title).paddingRight).toBe("72px");
+    const longTitle = document.createElement("span");
+    longTitle.className = "tile-title has-badge has-badge-long";
+    tile.append(longTitle);
+    expect(getComputedStyle(longTitle).paddingRight).toBe("94px");
     const badgeStyle = getComputedStyle(badge);
     expect(badgeStyle.position).toBe("absolute");
     expect(badgeStyle.color.replace(/\s/g, "").toLowerCase()).toMatch(/b8ac98|184,172,152/);
