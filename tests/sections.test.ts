@@ -86,15 +86,15 @@ describe("sections du répertoire", () => {
     ]);
 
     expect(idsBySection(songs, "annee")).toEqual([
-      ["années 1990", ["kka"]],
-      ["années 2000", ["ga-a", "ga-b"]],
-      ["années 2020", ["star", "abc"]],
+      ["Années 1990", ["kka"]],
+      ["Années 2000", ["ga-a", "ga-b"]],
+      ["Années 2020", ["star", "abc"]],
       ["Année inconnue", ["na"]],
     ]);
     expect(idsBySection(songs, "annee-desc")).toEqual([
-      ["années 2020", ["star", "abc"]],
-      ["années 2000", ["ga-a", "ga-b"]],
-      ["années 1990", ["kka"]],
+      ["Années 2020", ["star", "abc"]],
+      ["Années 2000", ["ga-a", "ga-b"]],
+      ["Années 1990", ["kka"]],
       ["Année inconnue", ["na"]],
     ]);
   });
@@ -110,13 +110,13 @@ describe("sections du répertoire", () => {
       fake("u", "마나", "가수", null),
     ];
     expect(idsBySection(songs, "annee")).toEqual([
-      ["années 1990", ["a-91", "z-91", "m-91", "b-95", "c-99"]],
-      ["années 2000", ["d-03"]],
+      ["Années 1990", ["a-91", "z-91", "m-91", "b-95", "c-99"]],
+      ["Années 2000", ["d-03"]],
       ["Année inconnue", ["u"]],
     ]);
     expect(idsBySection(songs, "annee-desc")).toEqual([
-      ["années 2000", ["d-03"]],
-      ["années 1990", ["c-99", "b-95", "a-91", "z-91", "m-91"]],
+      ["Années 2000", ["d-03"]],
+      ["Années 1990", ["c-99", "b-95", "a-91", "z-91", "m-91"]],
       ["Année inconnue", ["u"]],
     ]);
   });

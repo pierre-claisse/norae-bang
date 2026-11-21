@@ -155,7 +155,7 @@ function groupByDecade(songs: readonly Song[], direction: SortDirection): SongSe
   const ordered = direction === "asc" ? decades : [...decades].reverse();
   const sections: SongSection[] = ordered.map((decade) => ({
     id: `annees-${decade}`,
-    label: `années ${decade}`,
+    label: `Années ${decade}`,
     lang: "fr" as const,
     songs: [...(buckets.get(decade) ?? [])].sort((a, b) => byYearThenTitle(a, b, direction)),
   }));

@@ -495,9 +495,9 @@ describe("application", () => {
     expect(annee).toHaveAttribute("aria-pressed", "true");
     expect(annee.textContent).toContain("↑");
     expect(screen.getByRole("button", { name: "Artiste" })).toHaveAttribute("aria-pressed", "false");
-    expect(sectionLabels()).toEqual(["années 1990", "années 2000", "Année inconnue"]);
-    expect(sectionTitles("années 1990")).toEqual(["가나"]);
-    expect(sectionTitles("années 2000")).toEqual(["다나"]);
+    expect(sectionLabels()).toEqual(["Années 1990", "Années 2000", "Année inconnue"]);
+    expect(sectionTitles("Années 1990")).toEqual(["가나"]);
+    expect(sectionTitles("Années 2000")).toEqual(["다나"]);
     expect(sectionTitles("Année inconnue")).toEqual(["★별", "까나", "나나", "따나", "ABC"]);
     expect(new URLSearchParams(window.location.search).get("tri")).toBe("annee");
     const yearMeta = screen.getByRole("link", { name: /가나/ }).querySelector(".tile-meta");
@@ -506,7 +506,7 @@ describe("application", () => {
     const unknownMeta = screen.getByRole("link", { name: /까나/ }).querySelector(".tile-meta");
     expect(visibleSub(unknownMeta)).toBe("가수 가");
     expect(unknownMeta?.textContent ?? "").not.toMatch(/·/);
-    const yearHeading = screen.getByRole("heading", { name: "années 1990", level: 2 });
+    const yearHeading = screen.getByRole("heading", { name: "Années 1990", level: 2 });
     expect(yearHeading.closest("section")).toHaveAttribute("aria-labelledby", yearHeading.id);
     expect(yearHeading).toHaveAttribute("lang", "fr");
     expect(screen.getByRole("heading", { name: "Année inconnue", level: 2 })).toHaveAttribute("lang", "fr");
@@ -518,15 +518,15 @@ describe("application", () => {
 
     await user.click(annee);
     expect(screen.getByRole("button", { name: "Trier par année, décroissant" }).textContent).toContain("↓");
-    expect(sectionLabels()).toEqual(["années 2000", "années 1990", "Année inconnue"]);
+    expect(sectionLabels()).toEqual(["Années 2000", "Années 1990", "Année inconnue"]);
     expect(sectionTitles("Année inconnue")).toEqual(["★별", "까나", "나나", "따나", "ABC"]);
-    expect(sectionTitles("années 2000")).toEqual(["다나"]);
+    expect(sectionTitles("Années 2000")).toEqual(["다나"]);
     expect(new URLSearchParams(window.location.search).get("tri")).toBe("annee-desc");
     expect(screen.getByRole("link", { name: /다나/ })).toHaveAttribute("href", expect.stringContaining("tri=annee-desc"));
 
     await user.type(screen.getByRole("searchbox", { name: "Rechercher" }), "Titre da");
-    expect(sectionLabels()).toEqual(["années 2000"]);
-    expect(sectionTitles("années 2000")).toEqual(["다나"]);
+    expect(sectionLabels()).toEqual(["Années 2000"]);
+    expect(sectionTitles("Années 2000")).toEqual(["다나"]);
   });
 
   it("oublie un jeton stocké qui n’a pas le bon format", () => {
