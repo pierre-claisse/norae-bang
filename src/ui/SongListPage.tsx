@@ -9,7 +9,16 @@ import {
   type ListQuery,
 } from "../domain/filter";
 import type { LyricsStatus, Song } from "../domain/schema";
-import { groupSongs, type SongSection, type SongSort } from "../domain/sections";
+import {
+  groupSongs,
+  nextSort,
+  sortDirection,
+  sortKey,
+  type SongSection,
+  type SongSort,
+  type SortDirection,
+  type SortKey,
+} from "../domain/sections";
 import { useDocumentTitle } from "./useDocumentTitle";
 
 const QUERY_DEBOUNCE_MS = 150;
@@ -129,22 +138,13 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
     );
   }
 
-  function chooseSort(next: SongSort) {
+  function chooseSort(key: SortKey) {
+    const next = nextSort(sort, key);
     setParams(
       (previous) => {
         const updated = new URLSearchParams(previous);
-        switch (next) {
-          case "titre":
-            updated.delete("tri");
-            break;
-          case "artiste":
-            updated.set("tri", "artiste");
-            break;
-          default: {
-            const unexpected: never = next;
-            return unexpected;
-          }
-        }
+        if (next === "titre") updated.delete("tri");
+        else updated.set("tri", next);
         return updated;
       },
       { replace: true },
@@ -221,12 +221,9 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
             )}
           </p>
           <div className="sort-switch" role="group" aria-label="Trier">
-            <button type="button" className="sort-option" aria-pressed={sort === "titre"} onClick={() => chooseSort("titre")}>
-              Titre
-            </button>
-            <button type="button" className="sort-option" aria-pressed={sort === "artiste"} onClick={() => chooseSort("artiste")}>
-              Artiste
-            </button>
+            <SortButton label="Titre" option="titre" sort={sort} onChoose={chooseSort} />
+            <SortButton label="Artiste" option="artiste" sort={sort} onChoose={chooseSort} />
+            <SortButton label="Année" option="annee" sort={sort} onChoose={chooseSort} />
           </div>
         </div>
       </div>
@@ -240,6 +237,49 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
       ))}
     </div>
   );
+}
+
+function SortButton({
+  label,
+  option,
+  sort,
+  onChoose,
+}: {
+  label: string;
+  option: SortKey;
+  sort: SongSort;
+  onChoose: (key: SortKey) => void;
+}) {
+  const active = sortKey(sort) === option;
+  const direction = sortDirection(sort);
+  return (
+    <button
+      type="button"
+      className="sort-option"
+      aria-pressed={active}
+      aria-label={active ? sortAriaLabel(option, direction) : undefined}
+      onClick={() => onChoose(option)}
+    >
+      {label}
+      {active ? <span aria-hidden="true">{direction === "asc" ? " ↑" : " ↓"}</span> : null}
+    </button>
+  );
+}
+
+function sortAriaLabel(key: SortKey, direction: SortDirection): string {
+  const sense = direction === "asc" ? "croissant" : "décroissant";
+  switch (key) {
+    case "titre":
+      return `Trier par titre, ${sense}`;
+    case "artiste":
+      return `Trier par artiste, ${sense}`;
+    case "annee":
+      return `Trier par année, ${sense}`;
+    default: {
+      const unexpected: never = key;
+      return unexpected;
+    }
+  }
 }
 
 function DirectorySection({
@@ -256,7 +296,7 @@ function DirectorySection({
   const headingId = useId();
   return (
     <section className="directory-section" aria-labelledby={headingId}>
-      <h2 id={headingId} lang={section.label === "#" ? undefined : "ko"}>
+      <h2 id={headingId} lang={section.lang}>
         {section.label}
       </h2>
       <ol className="songs tiles">
@@ -293,28 +333,24 @@ function Tile({ song, sort, to, onOpen }: { song: Song; sort: SongSort; to: stri
 }
 
 function sublineTail(song: Song, sort: SongSort): Array<{ key: string; node: ReactNode }> {
-  const parts: Array<{ key: string; node: ReactNode }> = [];
-  switch (sort) {
+  const artist = { key: "artist", node: <span lang="ko">{song.artist}</span> };
+  const year =
+    song.year === null
+      ? null
+      : { key: "year", node: <span className="song-year">{song.year}</span> };
+  const key = sortKey(sort);
+  switch (key) {
     case "titre":
-      parts.push({
-        key: "artist",
-        node: <span lang="ko">{song.artist}</span>,
-      });
-      break;
+      return year ? [artist, year] : [artist];
     case "artiste":
-      break;
+      return year ? [year] : [];
+    case "annee":
+      return [artist];
     default: {
-      const unexpected: never = sort;
+      const unexpected: never = key;
       return unexpected;
     }
   }
-  if (song.year !== null) {
-    parts.push({
-      key: "year",
-      node: <span className="song-year">{song.year}</span>,
-    });
-  }
-  return parts;
 }
 
 function PartSep() {
