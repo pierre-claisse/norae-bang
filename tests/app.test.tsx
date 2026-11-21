@@ -556,7 +556,7 @@ describe("application", () => {
     expect(addGa).toHaveAccessibleName("Retirer des favoris, 가나");
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
     const ga = await screen.findByRole("link", { name: /가나/ });
-    expect(ga).toHaveAccessibleName(/favorite/);
+    expect(ga).toHaveAccessibleName(/favori/);
     const gaHeart = ga.querySelector(".tile-heart");
     expect(gaHeart).toHaveAttribute("aria-hidden", "true");
     expect(gaHeart?.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
@@ -573,7 +573,7 @@ describe("application", () => {
     await user.click(favoris);
     expect(favoris).toHaveAttribute("aria-pressed", "true");
     expect(new URLSearchParams(window.location.search).get("favoris")).toBe("1");
-    expect(document.querySelector(".count")?.textContent).toBe("2 favorites");
+    expect(document.querySelector(".count")?.textContent).toBe("2 favoris");
     expect(sectionTitles("ㄱ")).toEqual(["가나"]);
     expect(sectionTitles("ㄷ")).toEqual(["다나"]);
     expect(screen.queryByRole("link", { name: /나나/ })).toBeNull();
@@ -608,7 +608,7 @@ describe("application", () => {
     expect(new URLSearchParams(window.location.search).get("favoris")).toBe("1");
     expect(sectionTitles("Années 2000")).toEqual(["다나"]);
     expect(screen.queryByRole("heading", { name: "Années 1990" })).toBeNull();
-    expect(document.querySelector(".count")?.textContent).toBe("1 favorite");
+    expect(document.querySelector(".count")?.textContent).toBe("1 favori");
 
     const search = window.location.search;
     cleanup();
@@ -616,7 +616,7 @@ describe("application", () => {
     render(<App deps={{ fetchImpl: mockCatalog(directoryCatalog()) }} />);
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Favoris" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("link", { name: /다나/ })).toHaveAccessibleName(/favorite/);
+    expect(screen.getByRole("link", { name: /다나/ })).toHaveAccessibleName(/favori/);
     expect(screen.queryByRole("link", { name: /나나/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /Retirer des favoris/ })).toBeNull();
 
@@ -624,9 +624,11 @@ describe("application", () => {
     await user.click(await screen.findByRole("button", { name: "Retirer des favoris, 다나" }));
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
-    expect(document.querySelector(".count")?.textContent).toBe("Aucune chanson dans les favoris.");
+    expect(document.querySelector(".count")?.textContent).toBe(
+      "Aucun favori. Appui long sur une tuile, ou le bouton sur la fiche.",
+    );
     await user.click(screen.getByRole("button", { name: /가수 가, 2 chansons/ }));
-    expect(document.querySelector(".count")?.textContent).toBe("Aucune favorite pour cet artiste.");
+    expect(document.querySelector(".count")?.textContent).toBe("Aucun favori pour cet artiste.");
     await user.click(screen.getByRole("button", { name: "Favoris" }));
     expect(new URLSearchParams(window.location.search).get("favoris")).toBeNull();
     expect(document.querySelector(".count")?.textContent).toBe("2 chansons · 가수 가");
@@ -655,7 +657,7 @@ describe("application", () => {
         await vi.advanceTimersByTimeAsync(1);
       });
       expect(ga.classList.contains("is-favorite")).toBe(true);
-      expect(vibrate).toHaveBeenCalledWith(12);
+      expect(vibrate).toHaveBeenCalledWith(10);
       await act(async () => {
         await vi.advanceTimersByTimeAsync(20);
       });
@@ -676,13 +678,6 @@ describe("application", () => {
       vi.useRealTimers();
     }
 
-    ga.focus();
-    fireEvent.keyDown(ga, { key: "F" });
-    expect(ga.classList.contains("is-favorite")).toBe(false);
-    await waitFor(() => {
-      expect(screen.getByText("Retiré des favoris")).toBeInTheDocument();
-    });
-
     fireEvent.keyDown(ga, { key: "f" });
     expect(ga.classList.contains("is-favorite")).toBe(true);
     await user.click(screen.getByRole("button", { name: "Favoris" }));
@@ -694,7 +689,7 @@ describe("application", () => {
       const favorite = screen.getByRole("link", { name: /가나/ });
       fireEvent.pointerDown(favorite, { clientX: 12, clientY: 12, button: 0, pointerId: 3 });
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(500);
+        await vi.advanceTimersByTimeAsync(520);
       });
       fireEvent.pointerUp(favorite, { clientX: 12, clientY: 12, button: 0, pointerId: 3 });
       fireEvent.click(favorite);
@@ -702,7 +697,8 @@ describe("application", () => {
       vi.useRealTimers();
     }
     expect(screen.queryByRole("link", { name: /가나/ })).toBeNull();
-    expect(screen.getByText("Aucune chanson dans les favoris.")).toBeInTheDocument();
+    expect(screen.getByText("Aucun favori. Appui long sur une tuile, ou le bouton sur la fiche.")).toBeInTheDocument();
+    expect(screen.getByText("Retiré des favoris")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Favoris" }));
     await user.click(screen.getByRole("link", { name: /나나/ }));

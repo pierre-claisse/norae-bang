@@ -5,7 +5,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
@@ -243,6 +242,7 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
             <HeartIcon filled={favoritesOnly} />
             <span>Favoris</span>
           </button>
+          <span className="favorite-rule" aria-hidden="true" />
           <div className="artist-scroller">
             <div className="artist-row" role="group" aria-label="Filtrer par artiste" ref={rowRef}>
               <button type="button" className="artist-chip" aria-pressed={artist === null} onClick={() => chooseArtist(null)}>
@@ -430,7 +430,6 @@ function Tile({
       }}
       onPointerDown={longPress.onPointerDown}
       onContextMenu={(event) => event.preventDefault()}
-      onKeyDown={longPress.onKeyDown}
     >
       <span className="tile-heart" aria-hidden="true">
         <HeartIcon filled />
@@ -448,7 +447,7 @@ function Tile({
           ))}
         </span>
       ) : null}
-      {favorite ? <span className="sr-only">favorite</span> : null}
+      {favorite ? <span className="sr-only">favori</span> : null}
       <RowStatus status={song.lyricsStatus} />
     </Link>
   );
@@ -505,7 +504,7 @@ function useLongPress(onLongPress: () => void) {
       longPressed.current = true;
       onLongPress();
       try {
-        navigator.vibrate?.(12);
+        navigator.vibrate?.(10);
       } catch {
         // Ce navigateur n’expose pas la vibration.
       }
@@ -518,14 +517,7 @@ function useLongPress(onLongPress: () => void) {
     return true;
   }
 
-  function onKeyDown(event: ReactKeyboardEvent<HTMLAnchorElement>) {
-    if (event.key !== "f" && event.key !== "F") return;
-    if (event.altKey || event.ctrlKey || event.metaKey) return;
-    event.preventDefault();
-    onLongPress();
-  }
-
-  return { onPointerDown, consumeClick, onKeyDown };
+  return { onPointerDown, consumeClick };
 }
 
 function sublineTail(song: Song, sort: SongSort): Array<{ key: string; node: ReactNode }> {
@@ -592,8 +584,8 @@ function RowStatus({ status }: { status: LyricsStatus }) {
 
 function countLabel(count: number, favoritesOnly: boolean): string {
   if (favoritesOnly) {
-    if (count === 1) return "1 favorite";
-    return `${count} favorites`;
+    if (count === 1) return "1 favori";
+    return `${count} favoris`;
   }
   if (count === 1) return "1 chanson";
   return `${count} chansons`;
@@ -606,8 +598,8 @@ function artistChipLabel(name: string, count: number): string {
 
 function emptyLabel(searching: boolean, filteringArtist: boolean, favoritesOnly: boolean): string {
   if (searching) return "Aucune chanson ne correspond à cette recherche.";
-  if (favoritesOnly && filteringArtist) return "Aucune favorite pour cet artiste.";
-  if (favoritesOnly) return "Aucune chanson dans les favoris.";
+  if (favoritesOnly && filteringArtist) return "Aucun favori pour cet artiste.";
+  if (favoritesOnly) return "Aucun favori. Appui long sur une tuile, ou le bouton sur la fiche.";
   if (filteringArtist) return "Aucune chanson pour cet artiste.";
   return "Le répertoire ne contient encore aucune chanson.";
 }

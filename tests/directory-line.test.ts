@@ -102,15 +102,18 @@ describe("tuiles du répertoire", () => {
     const tileStyle = getComputedStyle(markedTile);
     expect(heartStyle.position).toBe("absolute");
     expect(heartStyle.pointerEvents).toBe("none");
-    expect(heartStyle.top).toBe("50%");
-    expect(Number.parseFloat(heartStyle.right)).toBeLessThan(0);
-    expect(tileStyle.overflow === "clip" || tileStyle.overflow === "hidden").toBe(true);
+    expect(heartStyle.transform).toBe("none");
+    expect(Number.parseFloat(heartStyle.top)).toBe(-1);
+    expect(Number.parseFloat(heartStyle.left)).toBe(-8);
+    expect(heartStyle.width).toBe("54px");
+    expect(heartStyle.height).toBe("54px");
+    expect(tileStyle.overflow).toBe("hidden");
     expect(tileStyle.userSelect).toBe("none");
     expect(heartStyle.color.replace(/\s/g, "").toLowerCase()).toMatch(/e86a78|232,106,120/);
-    expect(Number.parseFloat(heartStyle.opacity)).toBeLessThanOrEqual(0.32);
-    expect(Number.parseFloat(heartStyle.opacity)).toBeGreaterThan(0);
+    expect(Number.parseFloat(heartStyle.opacity)).toBe(0.3);
     expect(heart.getAttribute("aria-hidden")).toBe("true");
     expect(css).toContain("-webkit-touch-callout: none");
+    expect(css).toMatch(/button\.song-favorite::after\s*\{[^}]*inset:\s*-6px 0/);
   });
 });
 
