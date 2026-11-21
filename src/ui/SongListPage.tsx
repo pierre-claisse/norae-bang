@@ -260,8 +260,12 @@ function SortButton({
       aria-label={active ? sortAriaLabel(option, direction) : undefined}
       onClick={() => onChoose(option)}
     >
-      {label}
-      {active ? <span aria-hidden="true">{direction === "asc" ? " ↑" : " ↓"}</span> : null}
+      <span className="sort-label">{label}</span>
+      {active ? (
+        <span className="sort-arrow" aria-hidden="true">
+          {direction === "asc" ? " ↑" : " ↓"}
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -345,7 +349,7 @@ function sublineTail(song: Song, sort: SongSort): Array<{ key: string; node: Rea
     case "artiste":
       return year ? [year] : [];
     case "annee":
-      return [artist];
+      return year ? [artist, year] : [artist];
     default: {
       const unexpected: never = key;
       return unexpected;
