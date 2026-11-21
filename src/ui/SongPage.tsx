@@ -1,8 +1,10 @@
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { listPath, listQueryFromParams } from "../domain/filter";
 import { frenchTypography } from "../domain/french";
+import { useFavorites } from "../favorites/useFavorites";
 import type { LyricLine, LyricUnit, Song } from "../domain/schema";
 import { statusLabel } from "../domain/status";
+import { FavoriteButton } from "./FavoriteButton";
 import { useDocumentTitle } from "./useDocumentTitle";
 
 export function SongPage({ songs }: { songs: readonly Song[] }) {
@@ -26,6 +28,7 @@ function SongDetail({ song }: { song: Song }) {
   const [params] = useSearchParams();
   const listQuery = listQueryFromParams(params);
   const view = lyricView(song);
+  const favorites = useFavorites();
   return (
     <article className="song">
       <BackLink />
@@ -35,6 +38,13 @@ function SongDetail({ song }: { song: Song }) {
           <span className="badge" data-status={song.lyricsStatus}>
             {statusLabel(song.lyricsStatus)}
           </span>
+          <FavoriteButton
+            className="song-favorite"
+            pressed={favorites.ids.has(song.id)}
+            title={song.title}
+            showLabel
+            onToggle={() => favorites.toggle(song.id)}
+          />
         </div>
         {song.titleFr ? (
           <p className="title-fr" lang="fr">

@@ -4,6 +4,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../src/App";
+import { FAVORITES_STORAGE_KEY } from "../src/favorites/storage";
 import { TOKEN_STORAGE_KEY } from "../src/token/storage";
 import fixture from "./fixtures/catalog.json";
 
@@ -531,6 +532,90 @@ describe("application", () => {
     await user.type(screen.getByRole("searchbox", { name: "Rechercher" }), "Titre da");
     expect(sectionLabels()).toEqual(["Années 2000"]);
     expect(sectionTitles("Années 2000")).toEqual(["다나"]);
+  });
+
+  it("marque des favoris, les filtre et les conserve", async () => {
+    const user = userEvent.setup({ delay: 0 });
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    render(<App deps={{ fetchImpl: mockCatalog(directoryCatalog()) }} />);
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+
+    const artistGroup = screen.getByRole("group", { name: "Filtrer par artiste" });
+    const filter = screen.getByRole("button", { name: "Favoris" });
+    expect(artistGroup.contains(filter)).toBe(false);
+    expect(filter).toHaveAttribute("aria-pressed", "false");
+    expect(filter.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+
+    const addGa = screen.getByRole("button", { name: "Ajouter aux favoris, 가나" });
+    expect(addGa).toHaveAttribute("aria-pressed", "false");
+    expect(addGa.querySelector(".heart")).toHaveAttribute("data-filled", "false");
+    await user.click(addGa);
+    expect(screen.getByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+    expect(addGa).toHaveAttribute("aria-pressed", "true");
+    expect(addGa).toHaveAccessibleName("Retirer des favoris, 가나");
+    expect(addGa.querySelector(".heart")).toHaveAttribute("data-filled", "true");
+    expect(JSON.parse(window.localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "null")).toEqual(["ga"]);
+    expect(document.querySelector(".count")?.textContent).toBe("7 chansons");
+
+    await user.click(screen.getByRole("button", { name: "Ajouter aux favoris, 다나" }));
+    expect(JSON.parse(window.localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "null")).toEqual(["da", "ga"]);
+    await user.click(filter);
+    expect(filter).toHaveAttribute("aria-pressed", "true");
+    expect(new URLSearchParams(window.location.search).get("favoris")).toBe("1");
+    expect(document.querySelector(".count")?.textContent).toBe("2 favorites");
+    expect(sectionTitles("ㄱ")).toEqual(["가나"]);
+    expect(sectionTitles("ㄷ")).toEqual(["다나"]);
+    expect(screen.queryByRole("link", { name: /나나/ })).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Année" }));
+    expect(sectionLabels()).toEqual(["Années 1990", "Années 2000"]);
+    expect(new URLSearchParams(window.location.search).get("favoris")).toBe("1");
+    expect(new URLSearchParams(window.location.search).get("tri")).toBe("annee");
+
+    await user.click(screen.getByRole("link", { name: /가나/ }));
+    const remove = await screen.findByRole("button", { name: "Retirer des favoris, 가나" });
+    expect(remove).toHaveAttribute("aria-pressed", "true");
+    expect(remove).toHaveTextContent("Favori");
+    const back = screen.getByRole("link", { name: "Retour au répertoire" });
+    const backParams = new URL(back.getAttribute("href") ?? "", "http://localhost").searchParams;
+    expect(backParams.get("favoris")).toBe("1");
+    expect(backParams.get("tri")).toBe("annee");
+    const artistParams = new URL(
+      screen.getByRole("link", { name: "가수 가" }).getAttribute("href") ?? "",
+      "http://localhost",
+    ).searchParams;
+    expect(artistParams.get("favoris")).toBeNull();
+    expect(artistParams.get("tri")).toBe("annee");
+    expect(artistParams.get("artiste")).toBe("가수 가");
+
+    await user.click(remove);
+    expect(screen.getByRole("button", { name: "Ajouter aux favoris, 가나" })).toHaveAttribute("aria-pressed", "false");
+    expect(JSON.parse(window.localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "null")).toEqual(["da"]);
+
+    await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+    expect(new URLSearchParams(window.location.search).get("favoris")).toBe("1");
+    expect(sectionTitles("Années 2000")).toEqual(["다나"]);
+    expect(screen.queryByRole("heading", { name: "Années 1990" })).toBeNull();
+    expect(document.querySelector(".count")?.textContent).toBe("1 favorite");
+
+    const search = window.location.search;
+    cleanup();
+    at(`/norae-bang/${search}`);
+    render(<App deps={{ fetchImpl: mockCatalog(directoryCatalog()) }} />);
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Favoris" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Retirer des favoris, 다나" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("link", { name: /나나/ })).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Retirer des favoris, 다나" }));
+    expect(document.querySelector(".count")?.textContent).toBe("Aucune chanson dans les favoris.");
+    await user.click(screen.getByRole("button", { name: /가수 가, 2 chansons/ }));
+    expect(document.querySelector(".count")?.textContent).toBe("Aucune favorite pour cet artiste.");
+    await user.click(screen.getByRole("button", { name: "Favoris" }));
+    expect(new URLSearchParams(window.location.search).get("favoris")).toBeNull();
+    expect(document.querySelector(".count")?.textContent).toBe("2 chansons · 가수 가");
+    expect(window.localStorage.getItem(FAVORITES_STORAGE_KEY)).not.toMatch(/나나|다나|parole/u);
   });
 
   it("oublie un jeton stocké qui n’a pas le bon format", () => {

@@ -8,6 +8,7 @@
   --field: #6e655b;
   --brass: #c9a45c;
   --amber: #e8a33d;
+  --rose: #e86a78;
   --bordeaux: #a3342b;
   --error: #e0645a;
   --shadow: 0 10px 28px rgb(0 0 0 / 28%);
@@ -262,6 +263,10 @@ button.clear-search {
   stroke-linejoin: round;
 }
 
+.heart[data-filled="true"] {
+  fill: currentColor;
+}
+
 .field-error {
   display: flex;
   align-items: flex-start;
@@ -476,6 +481,52 @@ button.sort-option[aria-pressed="true"] .sort-label {
   text-decoration: none;
 }
 
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+button.favorite-filter {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.35rem;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 12px 0 10px;
+  border: 1px solid var(--brass);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cream);
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+button.favorite-filter::after {
+  content: "";
+  position: absolute;
+  inset: -6px 0;
+}
+
+button.favorite-filter[aria-pressed="true"] {
+  border-color: var(--rose);
+  background: var(--rose);
+  color: var(--bg);
+}
+
+.favorite-filter .icon,
+.song-favorite .icon,
+.tile-favorite .icon {
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
 .artist-scroller {
   position: relative;
   width: 100%;
@@ -483,6 +534,11 @@ button.sort-option[aria-pressed="true"] .sort-label {
   max-width: 100%;
   height: 44px;
   margin: 0;
+}
+
+.filter-row .artist-scroller {
+  flex: 1 1 auto;
+  width: auto;
 }
 
 .artist-row {
@@ -567,6 +623,10 @@ button.sort-option[aria-pressed="true"] .sort-label {
 }
 
 @media (min-width: 800px) {
+  .filter-row {
+    align-items: flex-start;
+  }
+
   .artist-scroller,
   .artist-row {
     height: auto;
@@ -625,6 +685,7 @@ button.sort-option[aria-pressed="true"] .sort-label {
 }
 
 .songs.tiles > li {
+  position: relative;
   display: flex;
   min-width: 0;
   border-bottom: 0;
@@ -638,7 +699,7 @@ button.sort-option[aria-pressed="true"] .sort-label {
   justify-content: center;
   width: 100%;
   height: 100%;
-  min-height: 52px;
+  min-height: 72px;
   padding: 6px 10px;
   background: #1e1a17;
   border-radius: 10px;
@@ -665,6 +726,7 @@ button.sort-option[aria-pressed="true"] .sort-label {
   line-height: 22px;
   white-space: normal;
   word-break: keep-all;
+  padding-right: 2rem;
 }
 
 .tile-title.has-badge {
@@ -684,6 +746,8 @@ button.sort-option[aria-pressed="true"] .sort-label {
   font-size: 13px;
   line-height: 18px;
   white-space: nowrap;
+  padding-right: 2rem;
+  overflow: hidden;
 }
 
 .tile-meta > span {
@@ -709,6 +773,35 @@ button.sort-option[aria-pressed="true"] .sort-label {
   position: absolute;
   top: 6px;
   right: 8px;
+}
+
+button.tile-favorite {
+  position: absolute;
+  z-index: 1;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 8px 8px 0;
+  border: 0;
+  border-radius: 0 0 10px 0;
+  background: transparent;
+  color: #b8ac98;
+}
+
+button.tile-favorite:hover,
+button.tile-favorite:focus-visible {
+  color: var(--cream);
+}
+
+button.tile-favorite[aria-pressed="true"],
+button.tile-favorite[aria-pressed="true"]:hover,
+button.tile-favorite[aria-pressed="true"]:focus-visible {
+  color: var(--rose);
 }
 
 .song-year {
@@ -761,6 +854,36 @@ button.sort-option[aria-pressed="true"] .sort-label {
   align-items: center;
   justify-content: flex-start;
   gap: 0.45rem 0.7rem;
+}
+
+button.song-favorite {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  border: 1px solid var(--field);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+button.song-favorite:hover,
+button.song-favorite:focus-visible {
+  border-color: var(--rose);
+  color: var(--rose);
+}
+
+button.song-favorite[aria-pressed="true"],
+button.song-favorite[aria-pressed="true"]:hover,
+button.song-favorite[aria-pressed="true"]:focus-visible {
+  border-color: var(--rose);
+  background: rgb(232 106 120 / 16%);
+  color: var(--rose);
 }
 
 .song h1 {

@@ -35,7 +35,7 @@ describe("tuiles du répertoire", () => {
     expect(getComputedStyle(list).alignItems).toBe("stretch");
     expect(getComputedStyle(cell).gridColumn).not.toBe("1 / -1");
     expect(heading.parentElement).toBe(section);
-    expect(getComputedStyle(tile).minHeight).toBe("52px");
+    expect(getComputedStyle(tile).minHeight).toBe("72px");
     expect(css).toMatch(/\.tile-title\s*\{[^}]*-webkit-line-clamp:\s*2/);
     expect(css).toMatch(/\.tile-title\s*\{[^}]*word-break:\s*keep-all/);
     expect(getComputedStyle(title).wordBreak).toBe("keep-all");
@@ -73,5 +73,24 @@ describe("tuiles du répertoire", () => {
     expect(labelStyle.textDecorationLine).toBe("underline");
     expect(labelStyle.textDecorationThickness).toBe("2px");
     expect(getComputedStyle(arrow).textDecorationLine).not.toBe("underline");
+  });
+
+  it("donne au cœur favori une cible de 44px, rose seulement lorsqu’il est rempli", () => {
+    document.head.append(Object.assign(document.createElement("style"), { textContent: css }));
+    const pressed = document.createElement("button");
+    pressed.className = "tile-favorite";
+    pressed.setAttribute("aria-pressed", "true");
+    const idle = document.createElement("button");
+    idle.className = "tile-favorite";
+    idle.setAttribute("aria-pressed", "false");
+    document.body.append(pressed, idle);
+
+    const pressedStyle = getComputedStyle(pressed);
+    expect(pressedStyle.width).toBe("44px");
+    expect(pressedStyle.height).toBe("44px");
+    expect(pressedStyle.color.replace(/\s/g, "").toLowerCase()).toMatch(/e86a78|232,106,120/);
+    expect(getComputedStyle(idle).color.replace(/\s/g, "").toLowerCase()).toMatch(/b8ac98|184,172,152/);
+    expect(css).toMatch(/:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--brass\)/);
+    expect(css).not.toMatch(/button\.tile-favorite[^{]*\{[^}]*outline:\s*none/);
   });
 });

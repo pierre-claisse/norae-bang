@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { artistChoices, artistListPath, filterSongs, listPath, listScrollKey, parseSort, songPath } from "../src/domain/filter";
+import {
+  artistChoices,
+  artistListPath,
+  filterSongs,
+  listPath,
+  listQueryFromParams,
+  listScrollKey,
+  parseSort,
+  songPath,
+} from "../src/domain/filter";
 import type { Song } from "../src/domain/schema";
 import fixture from "./fixtures/catalog.json";
 
@@ -77,5 +86,32 @@ describe("recherche", () => {
     );
     expect(listScrollKey("/norae-bang/", { q: "a", tri: "artiste", artiste: null })).toBe("/norae-bang/?q=a&tri=artiste");
     expect(listScrollKey("/norae-bang/", { q: "", tri: "annee", artiste: null })).toBe("/norae-bang/?tri=annee");
+  });
+
+  it("limite aux favoris et place favoris en dernier dans l’URL", () => {
+    const ids = new Set(["chanson-exemple", "sans-paroles"]);
+    expect(filterSongs(songs, "", null, ids).map((song) => song.id)).toEqual(["chanson-exemple", "sans-paroles"]);
+    expect(filterSongs(songs, "hangeul", null, ids)).toEqual([]);
+    expect(filterSongs(songs, "", "가수 예시", ids).map((song) => song.id)).toEqual(["chanson-exemple"]);
+    expect(filterSongs(songs, "chanson", "가수 예시", ids).map((song) => song.id)).toEqual(["chanson-exemple"]);
+    expect(filterSongs(songs, "", null, new Set())).toEqual([]);
+    expect(filterSongs(songs, "", null, null).map((song) => song.id)).toEqual(songs.map((song) => song.id));
+
+    expect(listQueryFromParams(new URLSearchParams("favoris=1")).favoris).toBe(true);
+    expect(listQueryFromParams(new URLSearchParams("favoris=oui")).favoris).toBe(false);
+    expect(listQueryFromParams(new URLSearchParams()).favoris).toBe(false);
+
+    const path = listPath({ q: "déjà", tri: "annee-desc", artiste: "가수 예시", favoris: true });
+    const params = new URLSearchParams(path.slice(2));
+    expect([...params.keys()]).toEqual(["q", "tri", "artiste", "favoris"]);
+    expect(params.get("favoris")).toBe("1");
+    expect(listPath({ q: "", tri: "titre", artiste: null, favoris: false })).toBe("/");
+    expect(listPath({ q: "", tri: "titre", artiste: null, favoris: true })).toBe("/?favoris=1");
+    expect(songPath("chanson-exemple", { q: "", tri: "titre", artiste: null, favoris: true })).toBe(
+      "/chanson/chanson-exemple?favoris=1",
+    );
+    expect(listScrollKey("/norae-bang/", { q: "", tri: "titre", artiste: null, favoris: true })).toBe(
+      "/norae-bang/?favoris=1",
+    );
   });
 });
