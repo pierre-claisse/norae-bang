@@ -68,12 +68,13 @@ describe("application", () => {
 
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBe(TOKEN);
-    expect(screen.getByText("Chanson exemple")).toBeInTheDocument();
-    const exempleSub = screen.getByRole("link", { name: /Chanson exemple/ }).querySelector(".song-sub");
-    expect(exempleSub?.textContent).toContain("Chanson exemple");
+    expect(screen.queryByText("Chanson exemple")).toBeNull();
+    const exempleSub = screen.getByRole("link", { name: /예시 노래/ }).querySelector(".song-sub");
+    expect(exempleSub?.textContent).not.toContain("Chanson exemple");
+    expect(exempleSub?.querySelector(".title-fr")).toBeNull();
     expect(exempleSub?.textContent).toContain("가수 예시");
     expect(exempleSub?.textContent).toContain("2020");
-    expect(exempleSub?.querySelector(".title-fr")?.nextElementSibling?.classList.contains("song-byline")).toBe(true);
+    expect(exempleSub?.textContent ?? "").not.toMatch(/^\s*·/);
     expect(screen.queryByText("Artiste exemple")).toBeNull();
     expect(screen.getAllByText("paroles vérifiées")).toHaveLength(2);
     expect(screen.getByText("brouillon")).toBeInTheDocument();
@@ -81,12 +82,13 @@ describe("application", () => {
     expect(screen.queryByText("Paroles manquantes")).toBeNull();
 
     await user.type(screen.getByRole("searchbox", { name: "Rechercher" }), "sans paroles");
-    expect(screen.getByRole("link", { name: /Sans paroles/ })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /Chanson exemple/ })).toBeNull();
+    expect(screen.getByRole("link", { name: /빈 노래/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /예시 노래/ })).toBeNull();
     await user.clear(screen.getByRole("searchbox", { name: "Rechercher" }));
 
-    await user.click(screen.getByRole("link", { name: /Chanson exemple/ }));
+    await user.click(screen.getByRole("link", { name: /예시 노래/ }));
     expect(await screen.findByRole("heading", { name: "예시 노래" })).toBeInTheDocument();
+    expect(screen.getByText("Chanson exemple")).toBeInTheDocument();
     expect(screen.getByText("Paroles vérifiées")).toBeInTheDocument();
     expect(document.querySelector(".song .meta")?.textContent).toBe("가수 예시 · 2020");
     expect(screen.queryByText("Artiste exemple")).toBeNull();
@@ -116,14 +118,14 @@ describe("application", () => {
     );
 
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
-    await user.click(await screen.findByRole("link", { name: /Brouillon exemple/ }));
+    await user.click(await screen.findByRole("link", { name: /초고 노래/ }));
     expect(await screen.findByText("Brouillon d\u2019une ligne inventée.")).toBeInTheDocument();
     expect(screen.getByText(/pas encore été vérifiées/)).toBeInTheDocument();
     expect(screen.queryByText(/Variante\u202F:/)).toBeNull();
     expect(screen.queryByRole("heading", { name: "Sources" })).toBeNull();
 
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
-    await user.click(await screen.findByRole("link", { name: /Sans paroles/ }));
+    await user.click(await screen.findByRole("link", { name: /빈 노래/ }));
     expect(await screen.findByText("Les paroles de cette chanson ne sont pas encore disponibles.")).toBeInTheDocument();
     expect(screen.getByText("Paroles manquantes")).toBeInTheDocument();
 
@@ -298,18 +300,18 @@ describe("application", () => {
     expect(screen.getByRole("button", { name: "Tous" })).toHaveAttribute("aria-pressed", "false");
     expect(new URLSearchParams(window.location.search).get("artiste")).toBe("가수 예시");
     expect(document.querySelector(".count")?.textContent).toBe("2 chansons · 가수 예시");
-    expect(screen.getByRole("link", { name: /Chanson exemple/ })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Seulement le hangeul/ })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /Brouillon exemple/ })).toBeNull();
-    expect(screen.queryByRole("link", { name: /Sans paroles/ })).toBeNull();
-    expect(screen.getByRole("link", { name: /Chanson exemple/ })).toHaveAttribute("href", expect.stringContaining("artiste="));
+    expect(screen.getByRole("link", { name: /예시 노래/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /한글만/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /초고 노래/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /빈 노래/ })).toBeNull();
+    expect(screen.getByRole("link", { name: /예시 노래/ })).toHaveAttribute("href", expect.stringContaining("artiste="));
 
     await user.type(screen.getByRole("searchbox", { name: "Rechercher" }), "hangeul");
-    expect(screen.queryByRole("link", { name: /Chanson exemple/ })).toBeNull();
-    expect(screen.getByRole("link", { name: /Seulement le hangeul/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /예시 노래/ })).toBeNull();
+    expect(screen.getByRole("link", { name: /한글만/ })).toBeInTheDocument();
     await user.clear(screen.getByRole("searchbox", { name: "Rechercher" }));
 
-    await user.click(screen.getByRole("link", { name: /Chanson exemple/ }));
+    await user.click(screen.getByRole("link", { name: /예시 노래/ }));
     expect(await screen.findByRole("heading", { name: "예시 노래" })).toBeInTheDocument();
     const artistLink = screen.getByRole("link", { name: "가수 예시" });
     expect(artistLink).toHaveAttribute("href", expect.stringContaining("artiste="));
@@ -319,13 +321,13 @@ describe("application", () => {
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
     expect(new URLSearchParams(window.location.search).get("artiste")).toBe("가수 예시");
     expect(screen.getByRole("button", { name: /가수 예시, 2 chansons/ })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.queryByRole("link", { name: /Brouillon exemple/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /초고 노래/ })).toBeNull();
 
-    await user.click(screen.getByRole("link", { name: /Chanson exemple/ }));
+    await user.click(screen.getByRole("link", { name: /예시 노래/ }));
     await user.click(await screen.findByRole("link", { name: "가수 예시" }));
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
     expect(new URLSearchParams(window.location.search).get("artiste")).toBe("가수 예시");
-    expect(screen.getByRole("link", { name: /Seulement le hangeul/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /한글만/ })).toBeInTheDocument();
   });
 
   it("ouvre une liste déjà filtrée par l’URL et centre la puce", async () => {
@@ -333,8 +335,8 @@ describe("application", () => {
     at(`/norae-bang/?artiste=${encodeURIComponent("셋째 그룹")}`);
     window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
     render(<App deps={{ fetchImpl: mockCatalog() }} />);
-    expect(await screen.findByRole("link", { name: /Sans paroles/ })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /Chanson exemple/ })).toBeNull();
+    expect(await screen.findByRole("link", { name: /빈 노래/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /예시 노래/ })).toBeNull();
     expect(screen.getByRole("button", { name: "셋째 그룹" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Tous" })).toHaveAttribute("aria-pressed", "false");
     expect(document.querySelector(".count")?.textContent).toBe("1 chanson · 셋째 그룹");
@@ -357,8 +359,10 @@ describe("application", () => {
     expect(screen.getByRole("button", { name: "Titre" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Artiste" })).toHaveAttribute("aria-pressed", "false");
     expect(document.querySelector(".count")?.textContent).toBe("7 chansons");
-    expect(screen.getByRole("link", { name: /Titre ga/ }).querySelector(".song-sub")?.textContent).toContain("가수 가");
-    expect(screen.getByRole("link", { name: /Titre ga/ }).querySelector(".song-sub")?.textContent).toContain("1991");
+    const gaSub = screen.getByRole("link", { name: /가나/ }).querySelector(".song-sub");
+    expect(gaSub?.textContent).not.toContain("Titre ga");
+    expect(gaSub?.textContent).toContain("가수 가");
+    expect(gaSub?.textContent).toContain("1991");
     const firstHeading = screen.getByRole("heading", { name: "ㄱ" });
     expect(firstHeading.id).not.toBe("");
     expect(firstHeading.closest("section")).toHaveAttribute("aria-labelledby", firstHeading.id);
@@ -380,9 +384,7 @@ describe("application", () => {
     expect(screen.getByRole("button", { name: "Artiste" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Titre" })).toHaveAttribute("aria-pressed", "false");
     expect(sectionLabels()).toEqual(["가수 가"]);
-    const artistSortSub = screen.getByRole("link", { name: /Titre kka/ }).querySelector(".song-sub");
-    expect(artistSortSub?.textContent).toContain("Titre kka");
-    expect(artistSortSub?.textContent).not.toContain("가수");
+    expect(screen.getByRole("link", { name: /까나/ }).querySelector(".song-sub")).toBeNull();
     expect(new URLSearchParams(window.location.search).get("tri")).toBe("artiste");
     expect(new URLSearchParams(window.location.search).get("q")).toBe("kka");
 
@@ -395,7 +397,7 @@ describe("application", () => {
 
     const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
     const scrollY = vi.spyOn(window, "scrollY", "get").mockReturnValue(240);
-    await user.click(screen.getByRole("link", { name: /Titre kka/ }));
+    await user.click(screen.getByRole("link", { name: /까나/ }));
     const back = await screen.findByRole("link", { name: "Retour au répertoire" });
     const backParams = new URL(back.getAttribute("href") ?? "", "http://localhost").searchParams;
     expect(backParams.get("q")).toBe("kka");
@@ -445,9 +447,9 @@ describe("application", () => {
     expect(withoutFrench?.querySelector(".title-fr")).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Artiste" }));
-    const byArtist = screen.getByRole("link", { name: /Titre da/ }).querySelector(".song-sub");
-    expect(byArtist?.textContent).toContain("Titre da");
-    expect(byArtist?.textContent).toContain("2001");
+    const byArtist = screen.getByRole("link", { name: /다나/ }).querySelector(".song-sub");
+    expect(byArtist?.textContent).not.toContain("Titre da");
+    expect(byArtist?.textContent?.trim()).toBe("2001");
     expect(byArtist?.textContent).not.toContain("가수");
     expect(byArtist?.textContent ?? "").not.toMatch(/^\s*·/);
     const yearOnly = screen.getByRole("link", { name: /마나/ }).querySelector(".song-sub");

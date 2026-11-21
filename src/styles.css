@@ -639,21 +639,11 @@ button.sort-option[aria-pressed="true"] {
   color: #b8ac98;
   font-size: 13px;
   line-height: 18px;
-}
-
-.song-row .title-fr {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  font-size: 13px;
-  line-height: 18px;
   white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
-.song-byline {
+.song-sub > span {
   flex: none;
-  white-space: nowrap;
 }
 
 .song-year {

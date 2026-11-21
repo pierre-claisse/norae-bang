@@ -6,31 +6,25 @@ import { describe, expect, it } from "vitest";
 const css = readFileSync(resolve(process.cwd(), "src/styles.css"), "utf8");
 
 describe("seconde ligne du répertoire", () => {
-  it("colle le bloc artiste juste après le français, qui seul peut se tronquer", () => {
+  it("laisse la seconde ligne en artiste et année, sans retrait", () => {
     document.head.append(Object.assign(document.createElement("style"), { textContent: css }));
     const row = document.createElement("a");
     row.className = "song-row";
     const sub = document.createElement("span");
     sub.className = "song-sub";
-    const title = document.createElement("span");
-    title.className = "title-fr";
-    const byline = document.createElement("span");
-    byline.className = "song-byline";
-    sub.append(title, byline);
+    const artist = document.createElement("span");
+    artist.lang = "ko";
+    const year = document.createElement("span");
+    year.className = "song-year";
+    sub.append(artist, year);
     row.append(sub);
     document.body.append(row);
 
-    const titleStyle = getComputedStyle(title);
-    const bylineStyle = getComputedStyle(byline);
-    expect(getComputedStyle(sub).display).toBe("flex");
-    expect(titleStyle.flexGrow).toBe("0");
-    expect(titleStyle.flexShrink).toBe("1");
-    expect(titleStyle.flexBasis).toBe("auto");
-    expect(titleStyle.whiteSpace).toBe("nowrap");
-    expect(titleStyle.textOverflow).toBe("ellipsis");
-    expect(bylineStyle.flexGrow).toBe("0");
-    expect(bylineStyle.flexShrink).toBe("0");
-    expect(bylineStyle.whiteSpace).toBe("nowrap");
+    const subStyle = getComputedStyle(sub);
+    expect(subStyle.display).toBe("flex");
+    expect(subStyle.whiteSpace).toBe("nowrap");
+    expect(getComputedStyle(artist).flexShrink).toBe("0");
+    expect(getComputedStyle(year).flexShrink).toBe("0");
 
     const heading = document.createElement("h2");
     const section = document.createElement("section");
