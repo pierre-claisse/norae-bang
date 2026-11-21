@@ -35,8 +35,11 @@ function TokenControl({ onForget }: { onForget: () => void }) {
 
   return (
     <>
-      <button type="button" className="token-link" onClick={() => setOpen(true)}>
-        Jeton
+      <button type="button" className="token-link" aria-label="Jeton" title="Jeton" onClick={() => setOpen(true)}>
+        <svg className="token-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+          <path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z" />
+          <circle cx="16.5" cy="7.5" r=".5" fill="currentColor" />
+        </svg>
       </button>
       {open ? (
         <div className="confirm-backdrop" onMouseDown={() => setOpen(false)}>

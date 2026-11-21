@@ -76,8 +76,8 @@ describe("application", () => {
     expect(exempleSub?.textContent ?? "").not.toMatch(/^\s*·/);
     expect(screen.queryByText("Artiste exemple")).toBeNull();
     expect(screen.getAllByText("paroles vérifiées")).toHaveLength(2);
-    expect(screen.getByText("brouillon")).toBeInTheDocument();
-    expect(screen.getByText("sans paroles")).toBeInTheDocument();
+    expect(screen.getByText("Brouillon")).toBeInTheDocument();
+    expect(screen.getByText("Sans paroles")).toBeInTheDocument();
     expect(screen.queryByText("Paroles manquantes")).toBeNull();
 
     await user.type(screen.getByRole("searchbox", { name: "Rechercher" }), "sans paroles");
@@ -128,7 +128,11 @@ describe("application", () => {
     expect(await screen.findByText("Les paroles de cette chanson ne sont pas encore disponibles.")).toBeInTheDocument();
     expect(screen.getByText("Paroles manquantes")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Jeton" }));
+    const tokenButton = screen.getByRole("button", { name: "Jeton" });
+    expect(tokenButton).toHaveAttribute("title", "Jeton");
+    expect(tokenButton.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    expect(tokenButton.textContent?.trim()).toBe("");
+    await user.click(tokenButton);
     expect(screen.getByRole("dialog", { name: "Oublier le jeton\u202F?" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Annuler" }));
     expect(screen.queryByRole("dialog")).toBeNull();
