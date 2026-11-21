@@ -256,12 +256,10 @@ function DirectorySection({
   const headingId = useId();
   return (
     <section className="directory-section" aria-labelledby={headingId}>
+      <h2 id={headingId} lang={section.label === "#" ? undefined : "ko"}>
+        {section.label}
+      </h2>
       <ol className="songs tiles">
-        <li className="tile-section">
-          <h2 id={headingId} lang={section.label === "#" ? undefined : "ko"}>
-            {section.label}
-          </h2>
-        </li>
         {section.songs.map((song) => (
           <li key={song.id}>
             <Tile song={song} sort={sort} to={songPath(song.id, liveQuery)} onOpen={onOpen} />

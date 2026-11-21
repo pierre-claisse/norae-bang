@@ -10,12 +10,9 @@ describe("tuiles du répertoire", () => {
     document.head.append(Object.assign(document.createElement("style"), { textContent: css }));
     const list = document.createElement("ol");
     list.className = "songs tiles";
-    const span = document.createElement("li");
-    span.className = "tile-section";
     const heading = document.createElement("h2");
     const section = document.createElement("section");
     section.className = "directory-section";
-    span.append(heading);
     const cell = document.createElement("li");
     const tile = document.createElement("a");
     tile.className = "tile";
@@ -30,14 +27,14 @@ describe("tuiles du répertoire", () => {
     badge.className = "row-status";
     tile.append(title, meta, badge);
     cell.append(tile);
-    list.append(span, cell);
-    section.append(list);
+    list.append(cell);
+    section.append(heading, list);
     document.body.append(section);
 
     expect(getComputedStyle(list).gridTemplateColumns).toBe("1fr 1fr");
     expect(getComputedStyle(list).alignItems).toBe("stretch");
-    expect(getComputedStyle(span).gridColumn).toBe("1 / -1");
     expect(getComputedStyle(cell).gridColumn).not.toBe("1 / -1");
+    expect(heading.parentElement).toBe(section);
     expect(getComputedStyle(tile).minHeight).toBe("52px");
     expect(css).toMatch(/\.tile-title\s*\{[^}]*-webkit-line-clamp:\s*2/);
     expect(css).toMatch(/\.tile-title\s*\{[^}]*word-break:\s*keep-all/);
