@@ -650,6 +650,11 @@ button.sort-option[aria-pressed="true"] {
   flex: none;
 }
 
+.song-sep {
+  flex: none;
+  white-space: pre;
+}
+
 .song-year {
   font-variant-numeric: tabular-nums;
 }

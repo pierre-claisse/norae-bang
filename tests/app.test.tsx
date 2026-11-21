@@ -72,8 +72,7 @@ describe("application", () => {
     const exempleSub = screen.getByRole("link", { name: /예시 노래/ }).querySelector(".song-sub");
     expect(exempleSub?.textContent).not.toContain("Chanson exemple");
     expect(exempleSub?.querySelector(".title-fr")).toBeNull();
-    expect(exempleSub?.textContent).toContain("가수 예시");
-    expect(exempleSub?.textContent).toContain("2020");
+    expect(visibleSub(exempleSub)).toBe("가수 예시 · 2020");
     expect(exempleSub?.textContent ?? "").not.toMatch(/^\s*·/);
     expect(screen.queryByText("Artiste exemple")).toBeNull();
     expect(screen.getAllByText("paroles vérifiées")).toHaveLength(2);
@@ -361,8 +360,7 @@ describe("application", () => {
     expect(document.querySelector(".count")?.textContent).toBe("7 chansons");
     const gaSub = screen.getByRole("link", { name: /가나/ }).querySelector(".song-sub");
     expect(gaSub?.textContent).not.toContain("Titre ga");
-    expect(gaSub?.textContent).toContain("가수 가");
-    expect(gaSub?.textContent).toContain("1991");
+    expect(visibleSub(gaSub)).toBe("가수 가 · 1991");
     const firstHeading = screen.getByRole("heading", { name: "ㄱ" });
     expect(firstHeading.id).not.toBe("");
     expect(firstHeading.closest("section")).toHaveAttribute("aria-labelledby", firstHeading.id);
@@ -449,7 +447,8 @@ describe("application", () => {
     await user.click(screen.getByRole("button", { name: "Artiste" }));
     const byArtist = screen.getByRole("link", { name: /다나/ }).querySelector(".song-sub");
     expect(byArtist?.textContent).not.toContain("Titre da");
-    expect(byArtist?.textContent?.trim()).toBe("2001");
+    expect(visibleSub(byArtist)).toBe("2001");
+    expect(visibleSub(byArtist)).not.toContain("·");
     expect(byArtist?.textContent).not.toContain("가수");
     expect(byArtist?.textContent ?? "").not.toMatch(/^\s*·/);
     const yearOnly = screen.getByRole("link", { name: /마나/ }).querySelector(".song-sub");
@@ -512,6 +511,14 @@ function storageKeys(): string[] {
     if (key) keys.push(key);
   }
   return keys;
+}
+
+function visibleSub(sub: Element | null): string {
+  if (!sub) return "";
+  return [...sub.children]
+    .filter((node) => !node.classList.contains("sr-only"))
+    .map((node) => node.textContent ?? "")
+    .join("");
 }
 
 function sectionLabels(): string[] {

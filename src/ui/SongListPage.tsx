@@ -322,7 +322,9 @@ function PartSep() {
   return (
     <>
       <span className="sr-only">, </span>
-      <span aria-hidden="true"> · </span>
+      <span className="song-sep" aria-hidden="true">
+        {" · "}
+      </span>
     </>
   );
 }
