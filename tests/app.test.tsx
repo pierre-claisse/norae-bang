@@ -475,7 +475,7 @@ describe("application", () => {
 
     at("/norae-bang/?vue=c");
     window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
-    render(<App deps={{ fetchImpl: mockCatalog(directoryCatalog()) }} />);
+    const grid = render(<App deps={{ fetchImpl: mockCatalog(directoryCatalog()) }} />);
     const tile = await screen.findByRole("link", { name: /다나/ });
     expect(tile).toHaveClass("tile");
     expect(tile.textContent).not.toContain("Titre da");
@@ -492,6 +492,16 @@ describe("application", () => {
     expect(sorted.querySelector(".tile-meta")?.textContent?.trim()).toBe("2001");
     expect(sorted.querySelector(".tile-meta")?.textContent).not.toContain("가수");
     expect(new URLSearchParams(window.location.search).get("vue")).toBe("c");
+    grid.unmount();
+
+    at("/norae-bang/?vue=a2");
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    render(<App deps={{ fetchImpl: mockCatalog(directoryCatalog()) }} />);
+    const clamped = await screen.findByRole("link", { name: /가나/ });
+    expect(clamped).toHaveClass("song-row");
+    expect(document.querySelector(".directory")).toHaveAttribute("data-view", "a2");
+    expect(document.querySelector(".tile")).toBeNull();
+    expect(clamped).toHaveAttribute("href", expect.stringContaining("vue=a2"));
   });
 
   it("oublie un jeton stocké qui n’a pas le bon format", () => {

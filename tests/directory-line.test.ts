@@ -5,11 +5,13 @@ import { describe, expect, it } from "vitest";
 
 const css = readFileSync(resolve(process.cwd(), "src/styles.css"), "utf8");
 
-describe("seconde ligne du répertoire", () => {
-  it("laisse la seconde ligne en artiste et année, sans retrait", () => {
+describe("ligne du répertoire", () => {
+  it("met le titre à gauche et l’artiste à droite sur 48 px", () => {
     document.head.append(Object.assign(document.createElement("style"), { textContent: css }));
     const row = document.createElement("a");
     row.className = "song-row";
+    const line = document.createElement("span");
+    line.className = "song-line";
     const sub = document.createElement("span");
     sub.className = "song-sub";
     const artist = document.createElement("span");
@@ -17,14 +19,20 @@ describe("seconde ligne du répertoire", () => {
     const year = document.createElement("span");
     year.className = "song-year";
     sub.append(artist, year);
-    row.append(sub);
+    row.append(line, sub);
     document.body.append(row);
 
+    const rowStyle = getComputedStyle(row);
     const subStyle = getComputedStyle(sub);
-    expect(subStyle.display).toBe("flex");
+    expect(rowStyle.display).toBe("flex");
+    expect(rowStyle.minHeight).toBe("48px");
+    expect(rowStyle.paddingTop).toBe("13px");
+    expect(rowStyle.paddingBottom).toBe("13px");
+    expect(getComputedStyle(line).flexGrow).toBe("1");
+    expect(subStyle.flexGrow).toBe("0");
+    expect(subStyle.flexShrink).toBe("0");
     expect(subStyle.whiteSpace).toBe("nowrap");
-    expect(getComputedStyle(artist).flexShrink).toBe("0");
-    expect(getComputedStyle(year).flexShrink).toBe("0");
+    expect(getComputedStyle(year).fontVariantNumeric).toContain("tabular-nums");
 
     const list = document.createElement("ol");
     list.className = "songs tiles";

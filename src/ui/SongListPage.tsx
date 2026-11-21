@@ -267,6 +267,7 @@ function DirectorySection({
   );
   switch (view) {
     case "a":
+    case "a2":
       return (
         <section className="directory-section" aria-labelledby={headingId}>
           {heading}

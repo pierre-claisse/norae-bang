@@ -64,7 +64,9 @@ describe("recherche", () => {
     expect(parseView(null)).toBe("a");
     expect(parseView("b")).toBe("a");
     expect(parseView("c")).toBe("c");
+    expect(parseView("a2")).toBe("a2");
     expect(listPath({ q: "", tri: "titre", artiste: null, vue: "a" })).toBe("/");
     expect(listPath({ q: "", tri: "titre", artiste: null, vue: "c" })).toBe("/?vue=c");
+    expect(listPath({ q: "", tri: "titre", artiste: null, vue: "a2" })).toBe("/?vue=a2");
   });
 });
