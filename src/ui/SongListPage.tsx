@@ -388,9 +388,9 @@ function RowStatus({ status }: { status: LyricsStatus }) {
     case "verified":
       return <span className="sr-only">paroles vérifiées</span>;
     case "draft":
-      return <span className="row-status">brouillon</span>;
+      return <span className="row-status">Brouillon</span>;
     case "missing":
-      return <span className="row-status">sans paroles</span>;
+      return <span className="row-status">Sans paroles</span>;
     default: {
       const unexpected: never = status;
       return unexpected;
