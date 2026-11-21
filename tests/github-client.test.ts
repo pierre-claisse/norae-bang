@@ -18,10 +18,10 @@ describe("client GitHub", () => {
       expect(init?.credentials).toBe("omit");
       const headers = new Headers(init?.headers);
       expect(headers.get("Authorization")).toBe(`Bearer ${token}`);
-      expect(headers.get("Accept")).toBe("application/vnd.github+json");
+      expect(headers.get("Accept")).toBe("application/vnd.github.raw+json");
       expect(headers.has("User-Agent")).toBe(false);
-      const wrapped = Buffer.from(text, "utf8").toString("base64").split("").join("\n");
-      return json({ sha: "fixture-sha", encoding: "base64", content: wrapped });
+      expect(init?.referrerPolicy).toBe("no-referrer");
+      return new Response(text, { status: 200 });
     });
     const client = new GitHubContents({
       owner: "pierre-claisse",
@@ -54,11 +54,28 @@ describe("client GitHub", () => {
     await expect(client.getFile("songs.json")).rejects.not.toThrow(/github_pat_/);
   });
 
-  it("signale un dossier et un contenu illisible", async () => {
+  it("lit un corps brut de plus de 1 Mo contenant du hangeul", async () => {
+    const hangul = "예시";
+    const text = `${hangul}${"가".repeat(400_000)}`;
+    expect(Buffer.byteLength(text, "utf8")).toBeGreaterThan(1_000_000);
+    const fetchImpl = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      expect(new Headers(init?.headers).get("Accept")).toBe("application/vnd.github.raw+json");
+      return new Response(text, { status: 200 });
+    });
+    const file = await clientWith(fetchImpl).getFile("songs.json");
+    const read = file?.text ?? "";
+    expect(read.length).toBe(text.length);
+    expect(read.slice(0, hangul.length)).toBe(hangul);
+    expect(read === text).toBe(true);
+  });
+
+  it("signale un dossier et un corps vide", async () => {
     const directory = clientWith(vi.fn(async () => json([])));
     await expect(directory.getFile("songs.json")).rejects.toThrow(/dossier/);
-    const broken = clientWith(vi.fn(async () => json({ encoding: "base64", content: "@@@" })));
-    await expect(broken.getFile("songs.json")).rejects.toThrow(/illisible/);
+    const empty = clientWith(vi.fn(async () => new Response("", { status: 200 })));
+    await expect(empty.getFile("songs.json")).rejects.toBeInstanceOf(GitHubRequestError);
+    await expect(empty.getFile("songs.json")).rejects.toMatchObject({ code: "http", status: 200 });
+    await expect(empty.getFile("songs.json")).rejects.toThrow(/illisible/);
   });
 
   it("nomme une coupure réseau sans masquer une annulation", async () => {

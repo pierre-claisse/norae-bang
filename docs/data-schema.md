@@ -2,7 +2,7 @@
 
 Fichier unique à la racine du dépôt privé `pierre-claisse/norae-bang-data`. JSON UTF-8, non chiffré, lisible. L’application n’accepte que la version 1. Une clé inconnue ou absente est une erreur, sauf les exceptions décrites plus bas (`notes`, `artistLatin`, `verificationLog`, `units[].variant`). Les champs nullable sont présents et valent `null` : une chaîne vide est refusée.
 
-L’API GitHub Contents ne renvoie pas un fichier de plus de 1 Mo. `songs.json` doit rester sous cette limite. Il n’y a pas de fichier par chanson.
+Le média brut de l’API Contents (`Accept: application/vnd.github.raw+json`) renvoie ce fichier jusqu’à 100 Mo. Il n’y a pas de fichier par chanson.
 
 ## Racine
 
