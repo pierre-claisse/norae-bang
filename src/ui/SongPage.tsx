@@ -38,12 +38,14 @@ function SongDetail({ song }: { song: Song }) {
           <span className="badge" data-status={song.lyricsStatus}>
             {statusLabel(song.lyricsStatus)}
           </span>
-          <FavoriteButton
-            className="badge song-favorite"
-            pressed={favorites.ids.has(song.id)}
-            title={song.title}
-            onToggle={() => favorites.toggle(song.id)}
-          />
+          {favorites.ids.has(song.id) ? (
+            <FavoriteButton
+              className="badge song-favorite"
+              pressed
+              title={song.title}
+              onToggle={() => favorites.toggle(song.id)}
+            />
+          ) : null}
         </div>
         {song.titleFr ? (
           <p className="title-fr" lang="fr">

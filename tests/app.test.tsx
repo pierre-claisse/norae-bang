@@ -549,13 +549,10 @@ describe("application", () => {
     expect(document.querySelector(".tile.is-favorite")).toBeNull();
 
     await user.click(screen.getByRole("link", { name: /가나/ }));
-    const addGa = await screen.findByRole("button", { name: "Favori, 가나" });
-    expect(addGa).toHaveAttribute("aria-pressed", "false");
-    await user.click(addGa);
-    expect(addGa).toHaveAttribute("aria-pressed", "true");
-    expect(addGa).toHaveAccessibleName("Favori, 가나");
+    expect(screen.queryByRole("button", { name: "Favori, 가나" })).toBeNull();
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
-    const ga = await screen.findByRole("link", { name: /가나/ });
+    await holdTile(await screen.findByRole("link", { name: /가나/ }));
+    const ga = screen.getByRole("link", { name: /가나/ });
     expect(ga).toHaveAccessibleName(/favori/);
     const gaHeart = ga.querySelector(".tile-heart");
     expect(gaHeart).toHaveAttribute("aria-hidden", "true");
@@ -564,9 +561,7 @@ describe("application", () => {
     expect(JSON.parse(window.localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "null")).toEqual(["ga"]);
     expect(document.querySelector(".count")?.textContent).toBe("7 chansons");
 
-    await user.click(screen.getByRole("link", { name: /다나/ }));
-    await user.click(await screen.findByRole("button", { name: "Favori, 다나" }));
-    await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
+    await holdTile(screen.getByRole("link", { name: /다나/ }));
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
     expect(JSON.parse(window.localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "null")).toEqual(["da", "ga"]);
     const favoris = screen.getByRole("button", { name: "Favoris" });
@@ -601,7 +596,7 @@ describe("application", () => {
     expect(artistParams.get("artiste")).toBe("가수 가");
 
     await user.click(remove);
-    expect(screen.getByRole("button", { name: "Favori, 가나" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByRole("button", { name: "Favori, 가나" })).toBeNull();
     expect(JSON.parse(window.localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "null")).toEqual(["da"]);
 
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
@@ -723,6 +718,15 @@ describe("application", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 });
+
+async function holdTile(tile: HTMLElement) {
+  fireEvent.pointerDown(tile, { pointerType: "touch", button: 0, clientX: 12, clientY: 12, pointerId: 11 });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 520));
+  });
+  fireEvent.pointerUp(tile, { pointerType: "touch", button: 0, clientX: 12, clientY: 12, pointerId: 11 });
+  fireEvent.click(tile);
+}
 
 function directoryCatalog() {
   const body = structuredClone(fixture) as { songs: Array<Record<string, unknown>> };
