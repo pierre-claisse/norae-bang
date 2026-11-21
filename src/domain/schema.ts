@@ -1,6 +1,3 @@
-export const PLAYLIST_SPOTIFY_ID = "47pICnNxleDOtiYrOcEeiM";
-export const PLAYLIST_NAME = "norae-bang";
-
 export const LYRICS_STATUSES = ["missing", "draft", "verified"] as const;
 export type LyricsStatus = (typeof LYRICS_STATUSES)[number];
 
@@ -68,8 +65,8 @@ export type Song = {
 export type Catalog = {
   schemaVersion: 1;
   playlist: {
-    spotifyId: typeof PLAYLIST_SPOTIFY_ID;
-    name: typeof PLAYLIST_NAME;
+    spotifyId: string;
+    name: string;
   };
   songs: Song[];
 };
@@ -134,18 +131,20 @@ function parsePlaylist(value: unknown, issues: string[]): Catalog["playlist"] | 
     return null;
   }
   rejectUnknown(value, PLAYLIST_KEYS, "playlist", issues);
-  const hasSpotifyId = Object.prototype.hasOwnProperty.call(value, "spotifyId");
-  const hasName = Object.prototype.hasOwnProperty.call(value, "name");
-  const spotifyId = take(value, "spotifyId", "playlist", issues);
-  const name = take(value, "name", "playlist", issues);
-  if (hasSpotifyId && spotifyId !== PLAYLIST_SPOTIFY_ID) {
-    issues.push(`playlist.spotifyId : valeur attendue « ${PLAYLIST_SPOTIFY_ID} ».`);
+  const spotifyId = parsePlaylistSpotifyId(take(value, "spotifyId", "playlist", issues), "playlist.spotifyId", issues);
+  const name = parseRequiredText(take(value, "name", "playlist", issues), "playlist.name", issues);
+  if (!spotifyId || !name) return null;
+  return { spotifyId, name };
+}
+
+function parsePlaylistSpotifyId(value: unknown, path: string, issues: string[]): string | undefined {
+  const text = parseRequiredText(value, path, issues);
+  if (!text) return undefined;
+  if (!SPOTIFY_TRACK_ID.test(text)) {
+    issues.push(`${path} : identifiant Spotify de 22 caractères alphanumériques.`);
+    return undefined;
   }
-  if (hasName && name !== PLAYLIST_NAME) {
-    issues.push(`playlist.name : valeur attendue « ${PLAYLIST_NAME} ».`);
-  }
-  if (spotifyId !== PLAYLIST_SPOTIFY_ID || name !== PLAYLIST_NAME) return null;
-  return { spotifyId: PLAYLIST_SPOTIFY_ID, name: PLAYLIST_NAME };
+  return text;
 }
 
 function parseSongs(value: unknown, issues: string[], warnings: string[]): Song[] | null {

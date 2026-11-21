@@ -14,10 +14,12 @@ L’API GitHub Contents ne renvoie pas un fichier de plus de 1 Mo. `songs.json` 
 
 ## `playlist`
 
+Graine de départ du catalogue. L’application ne dépend d’aucune playlist précise.
+
 | Clé | Règle |
 | --- | --- |
-| `spotifyId` | exactement `47pICnNxleDOtiYrOcEeiM` |
-| `name` | exactement `norae-bang` |
+| `spotifyId` | 22 caractères `[A-Za-z0-9]`, le même motif que `spotifyTrackId` |
+| `name` | chaîne non vide |
 
 ## `songs[]`
 
@@ -107,8 +109,8 @@ Exemple factice d’une unité qui commence au couplet 1 et finit au couplet 2 :
 {
   "schemaVersion": 1,
   "playlist": {
-    "spotifyId": "47pICnNxleDOtiYrOcEeiM",
-    "name": "norae-bang"
+    "spotifyId": "2oHlg1teDiWIhKSste9Xc1",
+    "name": "En coréen 🎶"
   },
   "songs": []
 }

@@ -12,6 +12,57 @@ describe("schéma songs.json", () => {
     expect(parseCatalog(catalog)).toEqual(catalog);
   });
 
+  it("accepte un autre identifiant et un autre nom de playlist", () => {
+    const copy = structuredClone(catalog);
+    copy.playlist = { spotifyId: "2oHlg1teDiWIhKSste9Xc1", name: "En coréen 🎶" };
+    const read = readCatalog(copy);
+    expect(read.warnings).toEqual([]);
+    expect(read.catalog).toEqual(copy);
+    expect(parseCatalog(copy).playlist).toEqual({
+      spotifyId: "2oHlg1teDiWIhKSste9Xc1",
+      name: "En coréen 🎶",
+    });
+  });
+
+  it("refuse un identifiant de playlist mal formé", () => {
+    for (const spotifyId of ["trop-court", "2oHlg1teDiWIhKSste9Xc", "2oHlg1teDiWIhKSste9Xc1X", "2oHlg1teDiWIhKSste9Xc!"]) {
+      const copy = structuredClone(catalog);
+      copy.playlist = { ...copy.playlist, spotifyId };
+      expect(
+        issues(copy).some((issue) => issue.includes("playlist.spotifyId") && issue.includes("22 caractères")),
+      ).toBe(true);
+    }
+  });
+
+  it("refuse un nom de playlist vide", () => {
+    for (const name of ["", "   "]) {
+      const copy = structuredClone(catalog);
+      copy.playlist = { ...copy.playlist, name };
+      expect(issues(copy).some((issue) => issue.includes("playlist.name") && issue.includes("chaîne non vide"))).toBe(
+        true,
+      );
+    }
+  });
+
+  it("refuse un mauvais type sur la playlist", () => {
+    const id = structuredClone(catalog) as { playlist: { spotifyId: unknown; name: string } };
+    id.playlist.spotifyId = 1;
+    expect(issues(id).some((issue) => issue.includes("playlist.spotifyId") && issue.includes("chaîne non vide"))).toBe(
+      true,
+    );
+    const name = structuredClone(catalog) as { playlist: { spotifyId: string; name: unknown } };
+    name.playlist.name = null;
+    expect(issues(name).some((issue) => issue.includes("playlist.name") && issue.includes("chaîne non vide"))).toBe(
+      true,
+    );
+  });
+
+  it("refuse une clé inconnue sur la playlist", () => {
+    const copy = structuredClone(catalog) as Catalog & { playlist: Catalog["playlist"] & { owner?: string } };
+    copy.playlist.owner = "inconnu";
+    expect(issues(copy)).toContain("playlist.owner : clé inconnue.");
+  });
+
   it("refuse une racine qui n’est pas un objet", () => {
     expect(issues(null)).toEqual(["racine : un objet est attendu."]);
   });
@@ -33,16 +84,6 @@ describe("schéma songs.json", () => {
       name: "refuse une version de schéma textuelle",
       change: (copy) => ({ ...copy, schemaVersion: "1" }),
       fragment: "nombre 1",
-    },
-    {
-      name: "refuse un autre identifiant de playlist",
-      change: (copy) => ({ ...copy, playlist: { ...copy.playlist, spotifyId: "0123456789abcdefghijkl" } }),
-      fragment: "playlist.spotifyId",
-    },
-    {
-      name: "refuse un autre nom de playlist",
-      change: (copy) => ({ ...copy, playlist: { ...copy.playlist, name: "autre" } }),
-      fragment: "playlist.name",
     },
     {
       name: "refuse une clé de chanson inconnue",
