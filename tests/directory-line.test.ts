@@ -26,6 +26,17 @@ describe("seconde ligne du répertoire", () => {
     expect(getComputedStyle(artist).flexShrink).toBe("0");
     expect(getComputedStyle(year).flexShrink).toBe("0");
 
+    const list = document.createElement("ol");
+    list.className = "songs tiles";
+    const span = document.createElement("li");
+    span.className = "tile-section";
+    const cell = document.createElement("li");
+    list.append(span, cell);
+    document.body.append(list);
+    expect(getComputedStyle(list).gridTemplateColumns).toBe("1fr 1fr");
+    expect(getComputedStyle(span).gridColumn).toBe("1 / -1");
+    expect(getComputedStyle(cell).gridColumn).not.toBe("1 / -1");
+
     const heading = document.createElement("h2");
     const section = document.createElement("section");
     section.className = "directory-section";

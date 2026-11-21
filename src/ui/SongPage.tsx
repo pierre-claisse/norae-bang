@@ -42,7 +42,11 @@ function SongDetail({ song }: { song: Song }) {
           </p>
         ) : null}
         <p className="meta">
-          <Link className="artist-link" lang="ko" to={listPath({ q: "", tri: listQuery.tri, artiste: song.artist })}>
+          <Link
+            className="artist-link"
+            lang="ko"
+            to={listPath({ q: "", tri: listQuery.tri, artiste: song.artist, vue: listQuery.vue })}
+          >
             {song.artist}
           </Link>
           {song.year !== null ? <span> · {song.year}</span> : null}

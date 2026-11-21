@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { artistChoices, artistListPath, filterSongs, listPath, listScrollKey, parseSort, songPath } from "../src/domain/filter";
+import { artistChoices, artistListPath, filterSongs, listPath, listScrollKey, parseSort, parseView, songPath } from "../src/domain/filter";
 import type { Song } from "../src/domain/schema";
 import fixture from "./fixtures/catalog.json";
 
@@ -61,5 +61,10 @@ describe("recherche", () => {
     expect(listPath({ q: "  ", tri: "titre", artiste: null })).toBe("/");
     expect(songPath("chanson-exemple", { q: "a", tri: "titre", artiste: null })).toBe("/chanson/chanson-exemple?q=a");
     expect(listScrollKey("/norae-bang/", { q: "a", tri: "artiste", artiste: null })).toBe("/norae-bang/?q=a&tri=artiste");
+    expect(parseView(null)).toBe("a");
+    expect(parseView("b")).toBe("a");
+    expect(parseView("c")).toBe("c");
+    expect(listPath({ q: "", tri: "titre", artiste: null, vue: "a" })).toBe("/");
+    expect(listPath({ q: "", tri: "titre", artiste: null, vue: "c" })).toBe("/?vue=c");
   });
 });

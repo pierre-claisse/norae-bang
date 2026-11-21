@@ -871,3 +871,84 @@ a.artist-link {
     max-width: 70ch;
   }
 }
+
+.songs.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 -1rem;
+  padding: 0 1rem;
+}
+
+.songs.tiles > li {
+  min-width: 0;
+  border-bottom: 0;
+}
+
+.tile-section {
+  grid-column: 1 / -1;
+}
+
+.songs.tiles .tile-section h2 {
+  padding: 0;
+  font-size: 14px;
+  line-height: 24px;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 52px;
+  padding: 6px 10px;
+  background: #1e1a17;
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: -2px;
+}
+
+.tile-title,
+.tile-meta {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.tile-title {
+  color: var(--cream);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+  text-overflow: ellipsis;
+  word-break: keep-all;
+}
+
+.tile-title.has-badge {
+  padding-right: 4.6rem;
+}
+
+.tile-meta {
+  color: #b8ac98;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.tile-badge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: #e8a33d;
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+}
+
+.tile-badge-missing {
+  color: #b8ac98;
+}

@@ -457,6 +457,43 @@ describe("application", () => {
     expect(yearOnly?.textContent ?? "").not.toMatch(/^\s*·/);
   });
 
+  it("n’ouvre la grille sans français qu’avec vue=c", async () => {
+    const user = userEvent.setup({ delay: 0 });
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    const lines = render(<App deps={{ fetchImpl: mockCatalog(directoryCatalog()) }} />);
+    expect(await screen.findByRole("link", { name: /가나/ })).toHaveClass("song-row");
+    expect(document.querySelector(".tile")).toBeNull();
+    expect(screen.queryByRole("button", { name: /tuile|vue/i })).toBeNull();
+    lines.unmount();
+
+    at("/norae-bang/?vue=b");
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    const ignored = render(<App deps={{ fetchImpl: mockCatalog(directoryCatalog()) }} />);
+    expect(await screen.findByRole("link", { name: /가나/ })).toHaveClass("song-row");
+    expect(document.querySelector(".tile")).toBeNull();
+    ignored.unmount();
+
+    at("/norae-bang/?vue=c");
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    render(<App deps={{ fetchImpl: mockCatalog(directoryCatalog()) }} />);
+    const tile = await screen.findByRole("link", { name: /다나/ });
+    expect(tile).toHaveClass("tile");
+    expect(tile.textContent).not.toContain("Titre da");
+    expect(tile.querySelector(".tile-meta")?.textContent).toContain("가수 다");
+    expect(tile.querySelector(".tile-meta")?.textContent).toContain("2001");
+    expect(tile.closest("ol")).toHaveClass("tiles");
+    expect(tile).toHaveAttribute("href", expect.stringContaining("vue=c"));
+    expect(document.querySelector(".song-row")).toBeNull();
+    expect(screen.queryByRole("button", { name: /tuile|vue/i })).toBeNull();
+    expect(screen.getByRole("link", { name: /까나/ }).querySelector(".tile-badge")?.textContent).toBe("brouillon");
+
+    await user.click(screen.getByRole("button", { name: "Artiste" }));
+    const sorted = screen.getByRole("link", { name: /다나/ });
+    expect(sorted.querySelector(".tile-meta")?.textContent?.trim()).toBe("2001");
+    expect(sorted.querySelector(".tile-meta")?.textContent).not.toContain("가수");
+    expect(new URLSearchParams(window.location.search).get("vue")).toBe("c");
+  });
+
   it("oublie un jeton stocké qui n’a pas le bon format", () => {
     window.localStorage.setItem(TOKEN_STORAGE_KEY, "pas-un-jeton");
     const fetchImpl = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response("non", { status: 500 }));

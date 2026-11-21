@@ -21,10 +21,14 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
   const [query, setQuery] = useState(urlQuery.q);
   const artist = urlQuery.artiste;
   const sort = urlQuery.tri;
+  const view = urlQuery.vue ?? "a";
   const artists = useMemo(() => artistChoices(songs), [songs]);
   const filtered = useMemo(() => filterSongs(songs, query, artist), [songs, query, artist]);
   const sections = useMemo(() => groupSongs(filtered, sort), [filtered, sort]);
-  const liveQuery = useMemo<ListQuery>(() => ({ q: query, tri: sort, artiste: artist }), [query, sort, artist]);
+  const liveQuery = useMemo<ListQuery>(
+    () => ({ q: query, tri: sort, artiste: artist, vue: view }),
+    [query, sort, artist, view],
+  );
   const scrollKey = useRef<string | null>(null);
   if (scrollKey.current === null) {
     scrollKey.current = listScrollKey(window.location.pathname, urlQuery);
@@ -159,7 +163,7 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
   }
 
   return (
-    <div className="directory" ref={rootRef}>
+    <div className="directory" data-view={view} ref={rootRef}>
       <h1 className="directory-title">Répertoire</h1>
       <div className="list-bar" ref={barRef}>
         <div className="search">
@@ -236,7 +240,7 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
         </button>
       ) : null}
       {sections.map((section) => (
-        <DirectorySection key={section.id} section={section} sort={sort} liveQuery={liveQuery} onOpen={rememberScroll} />
+        <DirectorySection key={section.id} section={section} sort={sort} view={view} liveQuery={liveQuery} onOpen={rememberScroll} />
       ))}
     </div>
   );
@@ -245,36 +249,84 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
 function DirectorySection({
   section,
   sort,
+  view,
   liveQuery,
   onOpen,
 }: {
   section: SongSection;
   sort: SongSort;
+  view: NonNullable<ListQuery["vue"]>;
   liveQuery: ListQuery;
   onOpen: () => void;
 }) {
   const headingId = useId();
+  const heading = (
+    <h2 id={headingId} lang={section.label === "#" ? undefined : "ko"}>
+      {section.label}
+    </h2>
+  );
+  switch (view) {
+    case "a":
+      return (
+        <section className="directory-section" aria-labelledby={headingId}>
+          {heading}
+          <ul className="songs">
+            {section.songs.map((song) => (
+              <li key={song.id}>
+                <Link to={songPath(song.id, liveQuery)} className="song-row" onClick={onOpen}>
+                  <span className="song-line">
+                    <span className="song-title" lang="ko">
+                      {song.title}
+                    </span>
+                    <RowStatus status={song.lyricsStatus} />
+                  </span>
+                  <SongSub song={song} sort={sort} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      );
+    case "c":
+      return (
+        <section className="directory-section" aria-labelledby={headingId}>
+          <ol className="songs tiles">
+            <li className="tile-section">{heading}</li>
+            {section.songs.map((song) => (
+              <li key={song.id}>
+                <Tile song={song} sort={sort} to={songPath(song.id, liveQuery)} onOpen={onOpen} />
+              </li>
+            ))}
+          </ol>
+        </section>
+      );
+    default: {
+      const unexpected: never = view;
+      return unexpected;
+    }
+  }
+}
+
+function Tile({ song, sort, to, onOpen }: { song: Song; sort: SongSort; to: string; onOpen: () => void }) {
+  const parts = sublineTail(song, sort);
+  const badge = song.lyricsStatus === "verified" ? "" : " has-badge";
   return (
-    <section className="directory-section" aria-labelledby={headingId}>
-      <h2 id={headingId} lang={section.label === "#" ? undefined : "ko"}>
-        {section.label}
-      </h2>
-      <ul className="songs">
-        {section.songs.map((song) => (
-          <li key={song.id}>
-            <Link to={songPath(song.id, liveQuery)} className="song-row" onClick={onOpen}>
-              <span className="song-line">
-                <span className="song-title" lang="ko">
-                  {song.title}
-                </span>
-                <RowStatus status={song.lyricsStatus} />
-              </span>
-              <SongSub song={song} sort={sort} />
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <Link to={to} className="tile" onClick={onOpen}>
+      <span className={`tile-title${badge}`} lang="ko">
+        {song.title}
+      </span>
+      {parts.length > 0 ? (
+        <span className="tile-meta">
+          {parts.map((part, index) => (
+            <Fragment key={part.key}>
+              {index > 0 ? <PartSep /> : null}
+              {part.node}
+            </Fragment>
+          ))}
+        </span>
+      ) : null}
+      <RowStatus status={song.lyricsStatus} tile />
+    </Link>
   );
 }
 
@@ -327,14 +379,14 @@ function PartSep() {
   );
 }
 
-function RowStatus({ status }: { status: LyricsStatus }) {
+function RowStatus({ status, tile = false }: { status: LyricsStatus; tile?: boolean }) {
   switch (status) {
     case "verified":
       return <span className="sr-only">paroles vérifiées</span>;
     case "draft":
-      return <span className="row-status">brouillon</span>;
+      return <span className={tile ? "tile-badge" : "row-status"}>brouillon</span>;
     case "missing":
-      return <span className="row-status">sans paroles</span>;
+      return <span className={tile ? "tile-badge tile-badge-missing" : "row-status"}>sans paroles</span>;
     default: {
       const unexpected: never = status;
       return unexpected;

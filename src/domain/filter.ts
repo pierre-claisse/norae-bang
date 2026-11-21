@@ -3,10 +3,13 @@ import type { SongSort } from "./sections";
 
 export type { SongSort } from "./sections";
 
+export type DirectoryView = "a" | "c";
+
 export type ListQuery = {
   q: string;
   tri: SongSort;
   artiste: string | null;
+  vue?: DirectoryView;
 };
 
 export type ArtistChoice = {
@@ -36,12 +39,18 @@ export function parseSort(value: string | null): SongSort {
   return "titre";
 }
 
+export function parseView(value: string | null): DirectoryView {
+  if (value === "c") return "c";
+  return "a";
+}
+
 export function listQueryFromParams(params: URLSearchParams): ListQuery {
   const artist = params.get("artiste");
   return {
     q: params.get("q") ?? "",
     tri: parseSort(params.get("tri")),
     artiste: artist && artist.trim() !== "" ? artist : null,
+    vue: parseView(params.get("vue")),
   };
 }
 
@@ -51,6 +60,7 @@ export function listSearchParams(query: ListQuery): URLSearchParams {
   if (q) params.set("q", q);
   if (query.tri === "artiste") params.set("tri", "artiste");
   if (query.artiste) params.set("artiste", query.artiste);
+  if ((query.vue ?? "a") === "c") params.set("vue", "c");
   return params;
 }
 
