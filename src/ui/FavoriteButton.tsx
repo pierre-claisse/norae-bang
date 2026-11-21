@@ -3,13 +3,11 @@ export function FavoriteButton({
   title,
   onToggle,
   className,
-  showLabel = false,
 }: {
   pressed: boolean;
   title: string;
   onToggle: () => void;
   className: string;
-  showLabel?: boolean;
 }) {
   return (
     <button
@@ -23,8 +21,7 @@ export function FavoriteButton({
         onToggle();
       }}
     >
-      <HeartIcon filled={pressed} />
-      {showLabel ? <span>Favori</span> : null}
+      Favori
     </button>
   );
 }

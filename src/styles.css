@@ -503,10 +503,9 @@ button.favorite-filter {
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 0.35rem;
   height: 32px;
   min-height: 32px;
-  padding: 0 12px 0 10px;
+  padding: 0 12px;
   border: 1px solid var(--brass);
   border-radius: 999px;
   background: transparent;
@@ -526,17 +525,6 @@ button.favorite-filter[aria-pressed="true"] {
   border-color: var(--rose);
   background: rgb(232 106 120 / 16%);
   color: var(--cream);
-}
-
-button.favorite-filter[aria-pressed="true"] .heart {
-  color: var(--rose);
-}
-
-.favorite-filter .icon,
-.song-favorite .icon {
-  flex: none;
-  width: 1.15rem;
-  height: 1.15rem;
 }
 
 .artist-scroller {
@@ -872,40 +860,21 @@ button.favorite-filter[aria-pressed="true"] .heart {
 
 button.song-favorite {
   position: relative;
-  display: inline-flex;
   flex: none;
-  align-items: center;
-  gap: 0.4rem;
-  height: 32px;
-  min-height: 32px;
-  padding: 0 0.9rem;
-  border: 1px solid var(--field);
-  border-radius: 999px;
+  border-color: var(--rose);
   background: transparent;
-  color: var(--muted);
-  font-size: 0.95rem;
-  line-height: 1.2;
+  color: var(--rose);
   white-space: nowrap;
 }
 
 button.song-favorite::after {
   content: "";
   position: absolute;
-  inset: -6px 0;
+  inset: calc((1.6rem - 44px) / 2) 0;
 }
 
-button.song-favorite:hover,
-button.song-favorite:focus-visible {
-  border-color: var(--rose);
-  color: var(--rose);
-}
-
-button.song-favorite[aria-pressed="true"],
-button.song-favorite[aria-pressed="true"]:hover,
-button.song-favorite[aria-pressed="true"]:focus-visible {
-  border-color: var(--rose);
+button.song-favorite[aria-pressed="true"] {
   background: rgb(232 106 120 / 16%);
-  color: var(--rose);
 }
 
 .song h1 {

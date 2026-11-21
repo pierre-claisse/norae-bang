@@ -39,10 +39,9 @@ function SongDetail({ song }: { song: Song }) {
             {statusLabel(song.lyricsStatus)}
           </span>
           <FavoriteButton
-            className="song-favorite"
+            className="badge song-favorite"
             pressed={favorites.ids.has(song.id)}
             title={song.title}
-            showLabel
             onToggle={() => favorites.toggle(song.id)}
           />
         </div>

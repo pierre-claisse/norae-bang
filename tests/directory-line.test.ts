@@ -113,7 +113,7 @@ describe("tuiles du répertoire", () => {
     expect(Number.parseFloat(heartStyle.opacity)).toBe(0.3);
     expect(heart.getAttribute("aria-hidden")).toBe("true");
     expect(css).toContain("-webkit-touch-callout: none");
-    expect(css).toMatch(/button\.song-favorite::after\s*\{[^}]*inset:\s*-6px 0/);
+    expect(css).toMatch(/button\.song-favorite::after\s*\{[^}]*inset:\s*calc\(\(1\.6rem - 44px\) \/ 2\) 0/);
   });
 });
 

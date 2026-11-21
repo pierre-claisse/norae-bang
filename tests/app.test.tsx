@@ -544,7 +544,7 @@ describe("application", () => {
     const filter = screen.getByRole("button", { name: "Favoris" });
     expect(artistGroup.contains(filter)).toBe(false);
     expect(filter).toHaveAttribute("aria-pressed", "false");
-    expect(filter.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    expect(filter.querySelector("svg")).toBeNull();
     expect(screen.queryByRole("button", { name: /Ajouter aux favoris/ })).toBeNull();
     expect(document.querySelector(".tile.is-favorite")).toBeNull();
 
@@ -587,6 +587,7 @@ describe("application", () => {
     const remove = await screen.findByRole("button", { name: "Retirer des favoris, 가나" });
     expect(remove).toHaveAttribute("aria-pressed", "true");
     expect(remove).toHaveTextContent("Favori");
+    expect(remove.querySelector("svg")).toBeNull();
     const back = screen.getByRole("link", { name: "Retour au répertoire" });
     const backParams = new URL(back.getAttribute("href") ?? "", "http://localhost").searchParams;
     expect(backParams.get("favoris")).toBe("1");

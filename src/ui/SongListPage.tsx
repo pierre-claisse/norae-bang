@@ -239,8 +239,7 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
             aria-pressed={favoritesOnly}
             onClick={() => chooseFavorites(!favoritesOnly)}
           >
-            <HeartIcon filled={favoritesOnly} />
-            <span>Favoris</span>
+            Favoris
           </button>
           <span className="favorite-rule" aria-hidden="true" />
           <div className="artist-scroller">
