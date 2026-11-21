@@ -1,5 +1,5 @@
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { artistListPath } from "../domain/filter";
+import { listPath, listQueryFromParams } from "../domain/filter";
 import { frenchTypography } from "../domain/french";
 import type { LyricLine, LyricUnit, Song } from "../domain/schema";
 import { statusLabel } from "../domain/status";
@@ -23,6 +23,8 @@ export function SongPage({ songs }: { songs: readonly Song[] }) {
 }
 
 function SongDetail({ song }: { song: Song }) {
+  const [params] = useSearchParams();
+  const listQuery = listQueryFromParams(params);
   const view = lyricView(song);
   return (
     <article className="song">
@@ -40,7 +42,7 @@ function SongDetail({ song }: { song: Song }) {
           </p>
         ) : null}
         <p className="meta">
-          <Link className="artist-link" lang="ko" to={artistListPath(song.artist)}>
+          <Link className="artist-link" lang="ko" to={listPath({ ...listQuery, artiste: song.artist })}>
             {song.artist}
           </Link>
           {song.year !== null ? <span> · {song.year}</span> : null}
@@ -88,10 +90,9 @@ function Sources({ song }: { song: Song }) {
 
 function BackLink() {
   const [params] = useSearchParams();
-  const artist = params.get("artiste");
   return (
     <p>
-      <Link className="back" to={artistListPath(artist && artist.trim() !== "" ? artist : null)}>
+      <Link className="back" to={listPath(listQueryFromParams(params))}>
         <span aria-hidden="true">←</span>
         Retour au répertoire
       </Link>
