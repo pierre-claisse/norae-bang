@@ -8,6 +8,7 @@
   --field: #6e655b;
   --brass: #c9a45c;
   --amber: #e8a33d;
+  --rose: #e86a78;
   --bordeaux: #a3342b;
   --error: #e0645a;
   --shadow: 0 10px 28px rgb(0 0 0 / 28%);
@@ -262,6 +263,10 @@ button.clear-search {
   stroke-linejoin: round;
 }
 
+.heart[data-filled="true"] {
+  fill: currentColor;
+}
+
 .field-error {
   display: flex;
   align-items: flex-start;
@@ -476,6 +481,52 @@ button.sort-option[aria-pressed="true"] .sort-label {
   text-decoration: none;
 }
 
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.favorite-rule {
+  flex: none;
+  align-self: center;
+  width: 1px;
+  height: 20px;
+  margin: 0 -6px;
+  background: #2e2924;
+}
+
+button.favorite-filter {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--brass);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cream);
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+button.favorite-filter::after {
+  content: "";
+  position: absolute;
+  inset: -6px 0;
+}
+
+button.favorite-filter[aria-pressed="true"] {
+  border-color: var(--rose);
+  background: rgb(232 106 120 / 16%);
+  color: var(--cream);
+}
+
 .artist-scroller {
   position: relative;
   width: 100%;
@@ -483,6 +534,11 @@ button.sort-option[aria-pressed="true"] .sort-label {
   max-width: 100%;
   height: 44px;
   margin: 0;
+}
+
+.filter-row .artist-scroller {
+  flex: 1 1 auto;
+  width: auto;
 }
 
 .artist-row {
@@ -567,6 +623,10 @@ button.sort-option[aria-pressed="true"] .sort-label {
 }
 
 @media (min-width: 800px) {
+  .filter-row {
+    align-items: flex-start;
+  }
+
   .artist-scroller,
   .artist-row {
     height: auto;
@@ -640,7 +700,11 @@ button.sort-option[aria-pressed="true"] .sort-label {
   height: 100%;
   min-height: 52px;
   padding: 6px 10px;
+  overflow: hidden;
   background: #1e1a17;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   border-radius: 10px;
   color: inherit;
   text-decoration: none;
@@ -707,8 +771,39 @@ button.sort-option[aria-pressed="true"] .sort-label {
 
 .tile .row-status {
   position: absolute;
+  z-index: 1;
   top: 6px;
   right: 8px;
+}
+
+.tile-title,
+.tile-meta {
+  position: relative;
+  z-index: 1;
+}
+
+.tile-heart {
+  position: absolute;
+  z-index: 0;
+  top: -1px;
+  left: -8px;
+  width: 54px;
+  height: 54px;
+  transform: none;
+  color: var(--rose);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.tile.is-favorite .tile-heart {
+  opacity: 0.3;
+}
+
+.tile-heart .icon {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .song-year {
@@ -756,11 +851,72 @@ button.sort-option[aria-pressed="true"] .sort-label {
 }
 
 .song-title-row {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;
   gap: 0.45rem 0.7rem;
+}
+
+button.song-favorite {
+  position: relative;
+  flex: none;
+  border-color: var(--rose);
+  color: var(--rose);
+  background: rgb(232 106 120 / 16%);
+  white-space: nowrap;
+}
+
+button.song-favorite::after {
+  content: "";
+  position: absolute;
+  inset: calc((1.6rem - 44px) / 2) 0;
+}
+
+button.song-favorite-add {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+button.song-favorite-add:focus-visible {
+  position: relative;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-height: 1.6rem;
+  margin: 0;
+  padding: 0.1rem 0.5rem;
+  overflow: visible;
+  clip-path: none;
+  border: 1px solid var(--field);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-family: Archivo, Pretendard, sans-serif;
+  font-weight: 600;
+  font-stretch: 112%;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+button.song-favorite-add:focus-visible::after {
+  content: "";
+  position: absolute;
+  inset: calc((1.6rem - 44px) / 2) 0;
 }
 
 .song h1 {

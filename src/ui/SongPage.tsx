@@ -1,8 +1,11 @@
+import { useLayoutEffect, useRef } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { listPath, listQueryFromParams } from "../domain/filter";
 import { frenchTypography } from "../domain/french";
+import { useFavorites } from "../favorites/useFavorites";
 import type { LyricLine, LyricUnit, Song } from "../domain/schema";
 import { statusLabel } from "../domain/status";
+import { FavoriteButton } from "./FavoriteButton";
 import { useDocumentTitle } from "./useDocumentTitle";
 
 export function SongPage({ songs }: { songs: readonly Song[] }) {
@@ -26,6 +29,19 @@ function SongDetail({ song }: { song: Song }) {
   const [params] = useSearchParams();
   const listQuery = listQueryFromParams(params);
   const view = lyricView(song);
+  const favorites = useFavorites();
+  const favorite = favorites.ids.has(song.id);
+  const favoriteRef = useRef<HTMLButtonElement>(null);
+  const restoreFocus = useRef(false);
+  useLayoutEffect(() => {
+    if (!restoreFocus.current) return;
+    restoreFocus.current = false;
+    favoriteRef.current?.focus();
+  }, [favorite]);
+  function toggleFavorite() {
+    restoreFocus.current = true;
+    favorites.toggle(song.id);
+  }
   return (
     <article className="song">
       <BackLink />
@@ -35,6 +51,23 @@ function SongDetail({ song }: { song: Song }) {
           <span className="badge" data-status={song.lyricsStatus}>
             {statusLabel(song.lyricsStatus)}
           </span>
+          {favorite ? (
+            <FavoriteButton
+              className="badge song-favorite"
+              pressed
+              title={song.title}
+              buttonRef={favoriteRef}
+              onToggle={toggleFavorite}
+            />
+          ) : (
+            <FavoriteButton
+              className="song-favorite-add"
+              pressed={false}
+              title={song.title}
+              buttonRef={favoriteRef}
+              onToggle={toggleFavorite}
+            />
+          )}
         </div>
         {song.titleFr ? (
           <p className="title-fr" lang="fr">

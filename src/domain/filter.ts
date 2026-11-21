@@ -7,6 +7,7 @@ export type ListQuery = {
   q: string;
   tri: SongSort;
   artiste: string | null;
+  favoris?: boolean;
 };
 
 export type ArtistChoice = {
@@ -24,8 +25,14 @@ export function artistChoices(songs: readonly Song[]): ArtistChoice[] {
     .sort((a, b) => a.name.localeCompare(b.name, "ko"));
 }
 
-export function filterSongs(songs: readonly Song[], query: string, artist: string | null = null): Song[] {
-  const scoped = artist ? songs.filter((song) => song.artist === artist) : songs;
+export function filterSongs(
+  songs: readonly Song[],
+  query: string,
+  artist: string | null = null,
+  favoriteIds: ReadonlySet<string> | null = null,
+): Song[] {
+  const byArtist = artist ? songs.filter((song) => song.artist === artist) : songs;
+  const scoped = favoriteIds ? byArtist.filter((song) => favoriteIds.has(song.id)) : byArtist;
   const needle = fold(query.trim());
   if (!needle) return [...scoped];
   return scoped.filter((song) => haystack(song).includes(needle));
@@ -53,6 +60,7 @@ export function listQueryFromParams(params: URLSearchParams): ListQuery {
     q: params.get("q") ?? "",
     tri: parseSort(params.get("tri")),
     artiste: artist && artist.trim() !== "" ? artist : null,
+    favoris: params.get("favoris") === "1",
   };
 }
 
@@ -62,6 +70,7 @@ export function listSearchParams(query: ListQuery): URLSearchParams {
   if (q) params.set("q", q);
   if (query.tri !== "titre") params.set("tri", query.tri);
   if (query.artiste) params.set("artiste", query.artiste);
+  if (query.favoris) params.set("favoris", "1");
   return params;
 }
 
