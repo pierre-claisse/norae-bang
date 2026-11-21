@@ -861,9 +861,9 @@ button.favorite-filter[aria-pressed="true"] {
 button.song-favorite {
   position: relative;
   flex: none;
-  border-color: var(--rose);
+  border-color: var(--field);
+  color: var(--muted);
   background: transparent;
-  color: var(--rose);
   white-space: nowrap;
 }
 
@@ -873,7 +873,17 @@ button.song-favorite::after {
   inset: calc((1.6rem - 44px) / 2) 0;
 }
 
-button.song-favorite[aria-pressed="true"] {
+button.song-favorite:hover,
+button.song-favorite:focus-visible {
+  border-color: var(--rose);
+  color: var(--rose);
+}
+
+button.song-favorite[aria-pressed="true"],
+button.song-favorite[aria-pressed="true"]:hover,
+button.song-favorite[aria-pressed="true"]:focus-visible {
+  border-color: var(--rose);
+  color: var(--rose);
   background: rgb(232 106 120 / 16%);
 }
 

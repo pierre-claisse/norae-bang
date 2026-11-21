@@ -14,7 +14,7 @@ export function FavoriteButton({
       type="button"
       className={className}
       aria-pressed={pressed}
-      aria-label={favoriteLabel(pressed, title)}
+      aria-label={favoriteLabel(title)}
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -34,7 +34,6 @@ export function HeartIcon({ filled }: { filled: boolean }) {
   );
 }
 
-function favoriteLabel(pressed: boolean, title: string): string {
-  const action = pressed ? "Retirer des favoris" : "Ajouter aux favoris";
-  return `${action}, ${title}`;
+function favoriteLabel(title: string): string {
+  return `Favori, ${title}`;
 }
