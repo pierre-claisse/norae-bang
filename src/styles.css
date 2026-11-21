@@ -445,9 +445,16 @@ button.sort-option {
 
 button.sort-option[aria-pressed="true"] {
   color: var(--brass);
+}
+
+button.sort-option[aria-pressed="true"] .sort-label {
   text-decoration-line: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 0.18em;
+}
+
+.sort-arrow {
+  text-decoration: none;
 }
 
 .artist-scroller {

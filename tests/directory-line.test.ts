@@ -55,4 +55,23 @@ describe("tuiles du répertoire", () => {
     expect(Number.parseFloat(headingStyle.fontSize)).toBeLessThanOrEqual(16);
     expect(getComputedStyle(year).fontVariantNumeric).toContain("tabular-nums");
   });
+
+  it("souligne le libellé du tri actif, pas la flèche", () => {
+    document.head.append(Object.assign(document.createElement("style"), { textContent: css }));
+    const button = document.createElement("button");
+    button.className = "sort-option";
+    button.setAttribute("aria-pressed", "true");
+    const label = document.createElement("span");
+    label.className = "sort-label";
+    const arrow = document.createElement("span");
+    arrow.className = "sort-arrow";
+    button.append(label, arrow);
+    document.body.append(button);
+
+    expect(getComputedStyle(button).textDecorationLine).not.toBe("underline");
+    const labelStyle = getComputedStyle(label);
+    expect(labelStyle.textDecorationLine).toBe("underline");
+    expect(labelStyle.textDecorationThickness).toBe("2px");
+    expect(getComputedStyle(arrow).textDecorationLine).not.toBe("underline");
+  });
 });

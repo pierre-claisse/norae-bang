@@ -86,16 +86,38 @@ describe("sections du répertoire", () => {
     ]);
 
     expect(idsBySection(songs, "annee")).toEqual([
-      ["1990", ["kka"]],
-      ["2000", ["ga-a", "ga-b"]],
-      ["2020", ["star", "abc"]],
+      ["années 1990", ["kka"]],
+      ["années 2000", ["ga-a", "ga-b"]],
+      ["années 2020", ["star", "abc"]],
       ["Année inconnue", ["na"]],
     ]);
     expect(idsBySection(songs, "annee-desc")).toEqual([
-      ["2020", ["star", "abc"]],
-      ["2000", ["ga-a", "ga-b"]],
-      ["1990", ["kka"]],
+      ["années 2020", ["star", "abc"]],
+      ["années 2000", ["ga-a", "ga-b"]],
+      ["années 1990", ["kka"]],
       ["Année inconnue", ["na"]],
+    ]);
+  });
+
+  it("trie chaque décennie par année dans le sens du tri, puis par titre et par id", () => {
+    const songs = [
+      fake("z-91", "가나", "가수", 1991),
+      fake("a-91", "가나", "가수", 1991),
+      fake("m-91", "다나", "가수", 1991),
+      fake("b-95", "나나", "가수", 1995),
+      fake("c-99", "가가", "가수", 1999),
+      fake("d-03", "라나", "가수", 2003),
+      fake("u", "마나", "가수", null),
+    ];
+    expect(idsBySection(songs, "annee")).toEqual([
+      ["années 1990", ["a-91", "z-91", "m-91", "b-95", "c-99"]],
+      ["années 2000", ["d-03"]],
+      ["Année inconnue", ["u"]],
+    ]);
+    expect(idsBySection(songs, "annee-desc")).toEqual([
+      ["années 2000", ["d-03"]],
+      ["années 1990", ["c-99", "b-95", "a-91", "z-91", "m-91"]],
+      ["Année inconnue", ["u"]],
     ]);
   });
 

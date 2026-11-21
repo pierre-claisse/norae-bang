@@ -94,7 +94,7 @@ export function groupSongs(songs: readonly Song[], sort: SongSort): SongSection[
     case "artiste":
       return groupByArtist(songs, direction);
     case "annee":
-      return groupByYear(songs, direction);
+      return groupByDecade(songs, direction);
     default: {
       const unexpected: never = key;
       return unexpected;
@@ -138,7 +138,7 @@ function groupByArtist(songs: readonly Song[], direction: SortDirection): SongSe
   }));
 }
 
-function groupByYear(songs: readonly Song[], direction: SortDirection): SongSection[] {
+function groupByDecade(songs: readonly Song[], direction: SortDirection): SongSection[] {
   const buckets = new Map<number, Song[]>();
   const unknown: Song[] = [];
   for (const song of songs) {
@@ -146,16 +146,18 @@ function groupByYear(songs: readonly Song[], direction: SortDirection): SongSect
       unknown.push(song);
       continue;
     }
-    const list = buckets.get(song.year);
+    const decade = Math.floor(song.year / 10) * 10;
+    const list = buckets.get(decade);
     if (list) list.push(song);
-    else buckets.set(song.year, [song]);
+    else buckets.set(decade, [song]);
   }
-  const years = [...buckets.keys()].sort((a, b) => a - b);
-  const ordered = direction === "asc" ? years : [...years].reverse();
-  const sections: SongSection[] = ordered.map((year) => ({
-    id: String(year),
-    label: String(year),
-    songs: [...(buckets.get(year) ?? [])].sort((a, b) => byTitle(a, b, "asc")),
+  const decades = [...buckets.keys()].sort((a, b) => a - b);
+  const ordered = direction === "asc" ? decades : [...decades].reverse();
+  const sections: SongSection[] = ordered.map((decade) => ({
+    id: `annees-${decade}`,
+    label: `années ${decade}`,
+    lang: "fr" as const,
+    songs: [...(buckets.get(decade) ?? [])].sort((a, b) => byYearThenTitle(a, b, direction)),
   }));
   if (unknown.length > 0) {
     sections.push({
@@ -196,6 +198,13 @@ function descending(key: SortKey): SongSort {
       return unexpected;
     }
   }
+}
+
+function byYearThenTitle(a: Song, b: Song, direction: SortDirection): number {
+  const yearA = a.year ?? 0;
+  const yearB = b.year ?? 0;
+  if (yearA !== yearB) return direction === "asc" ? yearA - yearB : yearB - yearA;
+  return byTitle(a, b, "asc");
 }
 
 function byTitle(a: Song, b: Song, direction: SortDirection): number {
