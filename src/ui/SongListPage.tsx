@@ -63,10 +63,6 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
     () => ({ q: query, tri: sort, artiste: artist, favoris: favoritesOnly }),
     [query, sort, artist, favoritesOnly],
   );
-  const scrollKey = useRef<string | null>(null);
-  if (scrollKey.current === null) {
-    scrollKey.current = listScrollKey(window.location.pathname, urlQuery);
-  }
   useDocumentTitle("Répertoire · norae-bang");
   const searching = query.trim().length > 0;
   const rootRef = useRef<HTMLDivElement>(null);
@@ -90,24 +86,11 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
           else updated.delete("q");
           return updated;
         },
-        { replace: true },
+        { replace: true, preventScrollReset: true },
       );
     }, QUERY_DEBOUNCE_MS);
     return () => window.clearTimeout(handle);
   }, [query, search, setParams]);
-
-  useEffect(() => {
-    // Une seule restauration, au montage : la clé est celle de l’URL d’arrivée.
-    const key = scrollKey.current;
-    if (!key) return;
-    const raw = sessionStorage.getItem(key);
-    if (raw === null) return;
-    const y = Number(raw);
-    if (!Number.isFinite(y)) return;
-    window.scrollTo(0, y);
-    const frame = window.requestAnimationFrame(() => window.scrollTo(0, y));
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
 
   useEffect(() => {
     const bar = barRef.current;
@@ -163,7 +146,7 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
         else updated.delete("artiste");
         return updated;
       },
-      { replace: true },
+      { replace: true, preventScrollReset: true },
     );
   }
 
@@ -175,7 +158,7 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
         else updated.delete("favoris");
         return updated;
       },
-      { replace: true },
+      { replace: true, preventScrollReset: true },
     );
   }
 
@@ -188,7 +171,7 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
         else updated.set("tri", next);
         return updated;
       },
-      { replace: true },
+      { replace: true, preventScrollReset: true },
     );
   }
 
@@ -203,11 +186,13 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
     }, 20);
   }
 
-  function rememberScroll() {
-    const key = listScrollKey(window.location.pathname, liveQuery);
-    sessionStorage.setItem(key, String(window.scrollY));
+  function syncListAddress() {
+    // La recherche est différée : l’entrée d’historique doit déjà porter la
+    // requête courante pour que le retour (POP) la retrouve. Le scroll, lui,
+    // est géré par <ScrollRestoration>.
+    const next = listScrollKey(window.location.pathname, liveQuery);
     const current = `${window.location.pathname}${window.location.search}`;
-    if (current !== key) window.history.replaceState(window.history.state, "", key);
+    if (current !== next) window.history.replaceState(window.history.state, "", next);
   }
 
   return (
@@ -306,7 +291,7 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
           liveQuery={liveQuery}
           favorites={favorites.ids}
           onToggleFavorite={toggleFavorite}
-          onOpen={rememberScroll}
+          onOpen={syncListAddress}
         />
       ))}
     </div>
