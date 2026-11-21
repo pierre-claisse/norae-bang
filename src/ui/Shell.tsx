@@ -1,9 +1,10 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, ScrollRestoration } from "react-router-dom";
 import { Header } from "./Header";
 
 export function Shell({ onForget }: { onForget: () => void }) {
   return (
     <>
+      <ScrollRestoration />
       <a className="skip" href="#contenu">
         Aller au contenu
       </a>

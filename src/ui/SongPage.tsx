@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useLayoutEffect, useRef, type MouseEvent as ReactMouseEvent } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { listPath, listQueryFromParams } from "../domain/filter";
 import { frenchTypography } from "../domain/french";
 import { useFavorites } from "../favorites/useFavorites";
@@ -122,15 +122,33 @@ function Sources({ song }: { song: Song }) {
 }
 
 function BackLink() {
+  const navigate = useNavigate();
   const [params] = useSearchParams();
   return (
     <p>
-      <Link className="back" to={listPath(listQueryFromParams(params))}>
+      <Link
+        className="back"
+        to={listPath(listQueryFromParams(params))}
+        onClick={(event) => {
+          if (!isPlainLeftClick(event) || historyIndex() <= 0) return;
+          event.preventDefault();
+          void navigate(-1);
+        }}
+      >
         <span aria-hidden="true">←</span>
         Retour au répertoire
       </Link>
     </p>
   );
+}
+
+function isPlainLeftClick(event: ReactMouseEvent<HTMLAnchorElement>): boolean {
+  return event.button === 0 && !event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey;
+}
+
+function historyIndex(): number {
+  const state = window.history.state as { idx?: unknown } | null;
+  return typeof state?.idx === "number" ? state.idx : 0;
 }
 
 function LyricBody({ song, view }: { song: Song; view: LyricView }) {

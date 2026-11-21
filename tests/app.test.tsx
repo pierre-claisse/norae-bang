@@ -16,6 +16,9 @@ beforeEach(() => {
   at("/norae-bang/");
   window.localStorage.clear();
   window.sessionStorage.clear();
+  // ScrollRestoration garde ses positions dans le module. Un objet vide
+  // remplace ce cache au montage, sinon un test hérite du défilement d’un autre.
+  window.sessionStorage.setItem("react-router-scroll-positions", "{}");
 });
 
 afterEach(() => {
@@ -410,7 +413,6 @@ describe("application", () => {
     expect(artistParams.get("q")).toBeNull();
     expect(artistParams.get("tri")).toBe("artiste");
     expect(artistParams.get("artiste")).toBe("가수 가");
-    expect(storageKeys().some((key) => key.includes("q=kka") && key.includes("tri=artiste"))).toBe(true);
 
     await user.click(back);
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
@@ -429,6 +431,78 @@ describe("application", () => {
     expect(new URLSearchParams(window.location.search).get("artiste")).toBe("가수 가");
     scrollTo.mockRestore();
     scrollY.mockRestore();
+  });
+
+  it("ouvre la fiche en haut et retrouve le défilement de la liste", async () => {
+    const user = userEvent.setup({ delay: 0 });
+    const scroll = mockWindowScroll();
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    render(<App deps={{ fetchImpl: mockCatalog(directoryCatalog()) }} />);
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+    await act(async () => {});
+
+    scroll.y = 960;
+    await user.click(screen.getByRole("link", { name: /따나/ }));
+    expect(await screen.findByRole("heading", { name: "따나" })).toBeInTheDocument();
+    expect(scroll.y).toBe(0);
+
+    scroll.y = 420;
+    await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+    expect(scroll.y).toBe(960);
+    expect(new URLSearchParams(window.location.search).get("tri")).toBeNull();
+
+    scroll.y = 960;
+    await user.click(screen.getByRole("button", { name: "Artiste" }));
+    expect(scroll.y).toBe(960);
+
+    scroll.y = 640;
+    await user.click(screen.getByRole("link", { name: /따나/ }));
+    expect(await screen.findByRole("heading", { name: "따나" })).toBeInTheDocument();
+    expect(scroll.y).toBe(0);
+    act(() => {
+      window.history.back();
+    });
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+    expect(scroll.y).toBe(640);
+    expect(screen.getByRole("button", { name: "Trier par artiste, croissant" })).toHaveAttribute("aria-pressed", "true");
+
+    scroll.restore();
+  });
+
+  it("attend la liste avant de restaurer le défilement", async () => {
+    const user = userEvent.setup({ delay: 0 });
+    const scroll = mockWindowScroll();
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    const first = render(<App deps={{ fetchImpl: mockCatalog(directoryCatalog()) }} />);
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+    await act(async () => {});
+    scroll.y = 1280;
+    await user.click(screen.getByRole("link", { name: /가나/ }));
+    expect(await screen.findByRole("heading", { name: "가나" })).toBeInTheDocument();
+    expect(scroll.y).toBe(0);
+    window.dispatchEvent(new Event("pagehide"));
+    first.unmount();
+
+    let release: (response: Response) => void = () => undefined;
+    const pending = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    scroll.y = 0;
+    scroll.calls.length = 0;
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    render(<App deps={{ fetchImpl: vi.fn(async () => pending) }} />);
+    expect(screen.getByText("Chargement du répertoire…")).toBeInTheDocument();
+    expect(scroll.calls).toEqual([]);
+    expect(screen.queryByRole("heading", { name: "Répertoire" })).toBeNull();
+
+    release(fileBody(JSON.stringify(directoryCatalog())));
+    expect(await screen.findByRole("heading", { name: "가나" })).toBeInTheDocument();
+    expect(scroll.y).toBe(0);
+    await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+    expect(scroll.y).toBe(1280);
+    scroll.restore();
   });
 
   it("n’écrit jamais un point en tête de seconde ligne", async () => {
@@ -787,13 +861,28 @@ function entry(
   };
 }
 
-function storageKeys(): string[] {
-  const keys: string[] = [];
-  for (let index = 0; index < window.sessionStorage.length; index += 1) {
-    const key = window.sessionStorage.key(index);
-    if (key) keys.push(key);
-  }
-  return keys;
+function mockWindowScroll() {
+  let y = 0;
+  const calls: number[] = [];
+  const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation((xOrOptions?: number | ScrollToOptions, top?: number) => {
+    const target = typeof xOrOptions === "number" ? top : xOrOptions?.top;
+    y = typeof target === "number" ? target : 0;
+    calls.push(y);
+  });
+  const scrollY = vi.spyOn(window, "scrollY", "get").mockImplementation(() => y);
+  return {
+    calls,
+    get y() {
+      return y;
+    },
+    set y(value: number) {
+      y = value;
+    },
+    restore() {
+      scrollTo.mockRestore();
+      scrollY.mockRestore();
+    },
+  };
 }
 
 function visibleSub(sub: Element | null): string {

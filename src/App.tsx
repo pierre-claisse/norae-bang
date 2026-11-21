@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createBrowserRouter, Link, RouterProvider } from "react-router-dom";
 import { catalogErrorMessage, loadCatalog } from "./domain/loadCatalog";
 import type { Catalog } from "./domain/schema";
 import { GitHubContents, GitHubRequestError, type FetchLike } from "./github/client";
@@ -119,22 +119,50 @@ function CatalogApp({
         </StatusScreen>
       );
     case "ready":
-      return (
-        <BrowserRouter basename={import.meta.env.BASE_URL}>
-          <Routes>
-            <Route element={<Shell onForget={onForget} />}>
-              <Route path="/" element={<SongListPage songs={state.catalog.songs} />} />
-              <Route path="/chanson/:songId" element={<SongPage songs={state.catalog.songs} />} />
-              <Route path="*" element={<MissingPage />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      );
+      return <CatalogRouter catalog={state.catalog} onForget={onForget} />;
     default: {
       const unexpected: never = state;
       return unexpected;
     }
   }
+}
+
+function CatalogRouter({ catalog, onForget }: { catalog: Catalog; onForget: () => void }) {
+  // Le routeur de données est requis par <ScrollRestoration>.
+  // StrictMode relance l’effet tout de suite : on n’abandonne le routeur
+  // qu’après un vrai démontage, une fois le délai écoulé.
+  const routerRef = useRef<ReturnType<typeof createBrowserRouter> | null>(null);
+  const disposeTimer = useRef<number | null>(null);
+  if (routerRef.current === null) {
+    routerRef.current = createBrowserRouter(
+      [
+        {
+          element: <Shell onForget={onForget} />,
+          children: [
+            { path: "/", element: <SongListPage songs={catalog.songs} /> },
+            { path: "/chanson/:songId", element: <SongPage songs={catalog.songs} /> },
+            { path: "*", element: <MissingPage /> },
+          ],
+        },
+      ],
+      { basename: import.meta.env.BASE_URL },
+    );
+  }
+  useEffect(() => {
+    if (disposeTimer.current !== null) {
+      window.clearTimeout(disposeTimer.current);
+      disposeTimer.current = null;
+    }
+    const router = routerRef.current;
+    return () => {
+      disposeTimer.current = window.setTimeout(() => {
+        disposeTimer.current = null;
+        router?.dispose();
+        if (routerRef.current === router) routerRef.current = null;
+      }, 0);
+    };
+  }, []);
+  return <RouterProvider router={routerRef.current} />;
 }
 
 function tokenAccessMessage(error: unknown): string | null {
