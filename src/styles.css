@@ -180,6 +180,16 @@ input[type="search"]::-webkit-search-decoration {
   padding: 1.5rem 0 3.5rem;
 }
 
+.wrap:has(> .directory) {
+  padding-top: 0;
+}
+
+@media (min-width: 960px) {
+  .wrap:has(> .directory) {
+    max-width: 44rem;
+  }
+}
+
 .gate-card {
   display: grid;
   gap: 0.85rem;
@@ -415,6 +425,7 @@ button.token-link:hover {
   display: flex;
   flex: none;
   align-items: center;
+  gap: 4px;
 }
 
 button.sort-option {
@@ -425,13 +436,16 @@ button.sort-option {
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: var(--brass);
+  color: #b8ac98;
   font-size: 13px;
   line-height: 18px;
+  text-decoration: none;
 }
 
 button.sort-option[aria-pressed="true"] {
-  text-decoration: underline;
+  color: var(--brass);
+  text-decoration-line: underline;
+  text-decoration-thickness: 2px;
   text-underline-offset: 0.18em;
 }
 
@@ -548,14 +562,14 @@ button.sort-option[aria-pressed="true"] {
   top: var(--bar-h);
   z-index: 1;
   margin: 0;
-  padding: 0;
+  padding: 10px 0 4px;
   background: #141210;
   color: var(--brass);
   font-family: Pretendard, sans-serif;
   font-weight: 700;
   font-stretch: 100%;
-  font-size: 14px;
-  line-height: 24px;
+  font-size: 15px;
+  line-height: 20px;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -628,7 +642,7 @@ button.sort-option[aria-pressed="true"] {
 }
 
 .song-row .title-fr {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   font-size: 13px;
