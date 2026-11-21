@@ -69,7 +69,7 @@ describe("application", () => {
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBe(TOKEN);
     expect(screen.queryByText("Chanson exemple")).toBeNull();
-    const exempleSub = screen.getByRole("link", { name: /예시 노래/ }).querySelector(".song-sub");
+    const exempleSub = screen.getByRole("link", { name: /예시 노래/ }).querySelector(".tile-meta");
     expect(exempleSub?.textContent).not.toContain("Chanson exemple");
     expect(exempleSub?.querySelector(".title-fr")).toBeNull();
     expect(visibleSub(exempleSub)).toBe("가수 예시 · 2020");
@@ -358,7 +358,7 @@ describe("application", () => {
     expect(screen.getByRole("button", { name: "Titre" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Artiste" })).toHaveAttribute("aria-pressed", "false");
     expect(document.querySelector(".count")?.textContent).toBe("7 chansons");
-    const gaSub = screen.getByRole("link", { name: /가나/ }).querySelector(".song-sub");
+    const gaSub = screen.getByRole("link", { name: /가나/ }).querySelector(".tile-meta");
     expect(gaSub?.textContent).not.toContain("Titre ga");
     expect(visibleSub(gaSub)).toBe("가수 가 · 1991");
     const firstHeading = screen.getByRole("heading", { name: "ㄱ" });
@@ -382,7 +382,7 @@ describe("application", () => {
     expect(screen.getByRole("button", { name: "Artiste" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Titre" })).toHaveAttribute("aria-pressed", "false");
     expect(sectionLabels()).toEqual(["가수 가"]);
-    expect(screen.getByRole("link", { name: /까나/ }).querySelector(".song-sub")).toBeNull();
+    expect(screen.getByRole("link", { name: /까나/ }).querySelector(".tile-meta")).toBeNull();
     expect(new URLSearchParams(window.location.search).get("tri")).toBe("artiste");
     expect(new URLSearchParams(window.location.search).get("q")).toBe("kka");
 
@@ -434,24 +434,24 @@ describe("application", () => {
     render(<App deps={{ fetchImpl: mockCatalog(body) }} />);
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
 
-    const subs = [...document.querySelectorAll(".song-sub")];
+    const subs = [...document.querySelectorAll(".tile-meta")];
     expect(subs.length).toBeGreaterThan(0);
     for (const sub of subs) {
       expect(sub.textContent ?? "").not.toMatch(/^\s*·/);
     }
-    const withoutFrench = screen.getByRole("link", { name: /마나/ }).querySelector(".song-sub");
+    const withoutFrench = screen.getByRole("link", { name: /마나/ }).querySelector(".tile-meta");
     expect(withoutFrench?.textContent?.trimStart().startsWith("가수 나")).toBe(true);
     expect(withoutFrench?.textContent).toContain("1987");
     expect(withoutFrench?.querySelector(".title-fr")).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Artiste" }));
-    const byArtist = screen.getByRole("link", { name: /다나/ }).querySelector(".song-sub");
+    const byArtist = screen.getByRole("link", { name: /다나/ }).querySelector(".tile-meta");
     expect(byArtist?.textContent).not.toContain("Titre da");
     expect(visibleSub(byArtist)).toBe("2001");
     expect(visibleSub(byArtist)).not.toContain("·");
     expect(byArtist?.textContent).not.toContain("가수");
     expect(byArtist?.textContent ?? "").not.toMatch(/^\s*·/);
-    const yearOnly = screen.getByRole("link", { name: /마나/ }).querySelector(".song-sub");
+    const yearOnly = screen.getByRole("link", { name: /마나/ }).querySelector(".tile-meta");
     expect(yearOnly?.textContent?.trim()).toBe("1987");
     expect(yearOnly?.textContent ?? "").not.toMatch(/^\s*·/);
   });
@@ -527,7 +527,7 @@ function sectionLabels(): string[] {
 
 function sectionTitles(label: string): string[] {
   const section = screen.getByRole("heading", { name: label, level: 2 }).closest("section");
-  return [...(section?.querySelectorAll(".song-title") ?? [])].map((node) => node.textContent ?? "");
+  return [...(section?.querySelectorAll(".tile-title") ?? [])].map((node) => node.textContent ?? "");
 }
 
 function mockCatalog(body: unknown = fixture) {

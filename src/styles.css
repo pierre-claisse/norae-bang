@@ -584,49 +584,87 @@ button.sort-option[aria-pressed="true"] {
   border-bottom: 1px solid #2e2924;
 }
 
-.song-row {
-  display: flex;
-  align-items: center;
+.songs.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
   gap: 8px;
+  margin: 0 -1rem;
+  padding: 0 1rem;
+}
+
+.songs.tiles > li {
+  min-width: 0;
+  border-bottom: 0;
+}
+
+.tile-section {
+  grid-column: 1 / -1;
+}
+
+.songs.tiles > li:not(.tile-section) {
+  display: flex;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
   width: 100%;
-  min-height: 48px;
-  padding: 13px 0;
+  height: 100%;
+  min-height: 52px;
+  padding: 6px 10px;
+  background: #1e1a17;
+  border-radius: 10px;
   color: inherit;
   text-decoration: none;
 }
 
-.song-row:active,
-.song-row:focus-visible {
-  background: #1e1a17;
+.tile:active,
+.tile:focus-visible {
   outline: 2px solid var(--brass);
   outline-offset: -2px;
 }
 
-.song-line {
-  display: flex;
-  flex: 1 1 auto;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.song-sub {
-  display: flex;
-  flex: none;
-  align-items: center;
-}
-
-.song-row .song-title {
+.tile-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   min-width: 0;
   overflow: hidden;
   color: var(--cream);
-  font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-weight: 600;
   line-height: 22px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  white-space: normal;
   word-break: keep-all;
+}
+
+.tile-title.has-badge {
+  padding-right: 6rem;
+}
+
+.tile-meta {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-width: 0;
+  color: #b8ac98;
+  font-size: 13px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.tile-meta > span {
+  flex: none;
+}
+
+.song-sep {
+  flex: none;
+  white-space: pre;
 }
 
 .row-status {
@@ -639,20 +677,10 @@ button.sort-option[aria-pressed="true"] {
   line-height: 18px;
 }
 
-.song-sub {
-  color: #b8ac98;
-  font-size: 13px;
-  line-height: 18px;
-  white-space: nowrap;
-}
-
-.song-sub > span {
-  flex: none;
-}
-
-.song-sep {
-  flex: none;
-  white-space: pre;
+.tile .row-status {
+  position: absolute;
+  top: 6px;
+  right: 8px;
 }
 
 .song-year {
