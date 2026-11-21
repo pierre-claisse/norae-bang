@@ -26,15 +26,10 @@ export class GitHubContents {
 
   async getFile(path: string, signal?: AbortSignal): Promise<{ text: string } | null> {
     try {
-      const body = await this.request(this.contentsPath(path), signal);
-      if (Array.isArray(body)) throw new Error("La réponse GitHub est un dossier, pas un fichier.");
-      if (!isRecord(body)) throw new GitHubRequestError("http", 200);
-      const encoding = body.encoding;
-      const content = body.content;
-      if (encoding !== "base64" || typeof content !== "string" || content.trim() === "") {
-        throw new GitHubRequestError("http", 200);
-      }
-      return { text: decodeBase64(content) };
+      const text = await this.request(this.contentsPath(path), signal);
+      if (isDirectoryListing(text)) throw new Error("La réponse GitHub est un dossier, pas un fichier.");
+      if (text === "") throw new GitHubRequestError("http", 200);
+      return { text };
     } catch (error) {
       if (error instanceof GitHubRequestError && error.code === "not_found") return null;
       throw error;
@@ -52,7 +47,7 @@ export class GitHubContents {
     return `/repos/${owner}/${repo}/contents/${encoded}?ref=${ref}`;
   }
 
-  private async request(path: string, signal?: AbortSignal): Promise<unknown> {
+  private async request(path: string, signal?: AbortSignal): Promise<string> {
     const fetchImpl = this.options.fetchImpl ?? fetch;
     let response: Response;
     try {
@@ -64,7 +59,7 @@ export class GitHubContents {
         referrerPolicy: "no-referrer",
         signal,
         headers: {
-          Accept: "application/vnd.github+json",
+          Accept: "application/vnd.github.raw+json",
           Authorization: `Bearer ${this.options.token}`,
           "X-GitHub-Api-Version": "2022-11-28",
         },
@@ -80,18 +75,12 @@ export class GitHubContents {
       throw new GitHubRequestError(codeFor(response.status), response.status);
     }
 
-    let json: unknown;
     try {
-      json = await response.json();
+      return await response.text();
     } catch {
       throw new GitHubRequestError("http", response.status);
     }
-    return json;
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function codeFor(status: number): GitHubCode {
@@ -120,13 +109,12 @@ function messageFor(code: GitHubCode, status: number): string {
   }
 }
 
-function decodeBase64(value: string): string {
+function isDirectoryListing(text: string): boolean {
+  if (!text.trimStart().startsWith("[")) return false;
   try {
-    const binary = atob(value.replace(/\s/g, ""));
-    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-    return new TextDecoder().decode(bytes);
+    return Array.isArray(JSON.parse(text));
   } catch {
-    throw new GitHubRequestError("http", 200);
+    return false;
   }
 }
 

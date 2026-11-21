@@ -822,14 +822,10 @@ function fileResponse(text: string) {
 }
 
 function fileBody(text: string): Response {
-  return new Response(
-    JSON.stringify({
-      encoding: "base64",
-      sha: "fixture-sha",
-      content: Buffer.from(text, "utf8").toString("base64"),
-    }),
-    { status: 200, headers: { "Content-Type": "application/json" } },
-  );
+  return new Response(text, {
+    status: 200,
+    headers: { "Content-Type": "application/vnd.github.raw+json; charset=utf-8" },
+  });
 }
 
 function at(path: string): void {

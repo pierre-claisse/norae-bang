@@ -8,7 +8,7 @@ Lecture seule de `songs.json` à la racine du dépôt privé `pierre-claisse/nor
 
 `GET https://api.github.com/repos/pierre-claisse/norae-bang-data/contents/songs.json?ref=main`
 
-L’appel envoie `Authorization: Bearer`, `Accept: application/vnd.github+json`, `cache: no-store`, `credentials: omit`, `redirect: error`. Le client n’a pas de méthode d’écriture. `User-Agent` n’est pas fixé : c’est un en-tête interdit dans un navigateur, qui fournit déjà le sien.
+L’appel envoie `Authorization: Bearer`, `Accept: application/vnd.github.raw+json`, `cache: no-store`, `credentials: omit`, `redirect: error`, `referrerPolicy: no-referrer`. Le corps est le fichier en UTF-8, lu par `response.text()`, jusqu’à 100 Mo. Le média `application/vnd.github+json` ne convient pas au-delà de 1 Mo : GitHub répond alors `encoding: "none"` et `content: ""`. Le client n’a pas de méthode d’écriture. `User-Agent` n’est pas fixé : c’est un en-tête interdit dans un navigateur, qui fournit déjà le sien.
 
 Le jeton est un PAT fine-grained collé par l’utilisateur (`github_pat_…`). Il est stocké dans `localStorage` sous la clé `norae-bang.token`. Le lien « Jeton » ouvre une confirmation avant de l’effacer et de revenir à l’écran de connexion. Un jeton au mauvais format, refusé ou sans accès au dépôt, ramène à ce champ avec la cause. Le site ne traduit rien : il affiche les unités déjà enregistrées.
 
