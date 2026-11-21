@@ -274,7 +274,7 @@ function Tile({ song, sort, to, onOpen }: { song: Song; sort: SongSort; to: stri
   const parts = sublineTail(song, sort);
   return (
     <Link to={to} className="tile" onClick={onOpen}>
-      <span className={song.lyricsStatus === "verified" ? "tile-title" : "tile-title has-badge"} lang="ko">
+      <span className={titleClass(song.lyricsStatus)} lang="ko">
         {song.title}
       </span>
       {parts.length > 0 ? (
@@ -326,6 +326,21 @@ function PartSep() {
       </span>
     </>
   );
+}
+
+function titleClass(status: LyricsStatus): string {
+  switch (status) {
+    case "verified":
+      return "tile-title";
+    case "draft":
+      return "tile-title has-badge";
+    case "missing":
+      return "tile-title has-badge has-badge-long";
+    default: {
+      const unexpected: never = status;
+      return unexpected;
+    }
+  }
 }
 
 function RowStatus({ status }: { status: LyricsStatus }) {

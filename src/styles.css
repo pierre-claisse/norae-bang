@@ -641,7 +641,11 @@ button.sort-option[aria-pressed="true"] {
 }
 
 .tile-title.has-badge {
-  padding-right: 6rem;
+  padding-right: 4.5rem;
+}
+
+.tile-title.has-badge-long {
+  padding-right: 5.875rem;
 }
 
 .tile-meta {
