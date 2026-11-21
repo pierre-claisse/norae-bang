@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../src/App";
@@ -14,11 +14,13 @@ const RENDERED_CONTEXT = `Phrase de contexte factice, pour la fiche d\u2019exemp
 beforeEach(() => {
   at("/norae-bang/");
   window.localStorage.clear();
+  window.sessionStorage.clear();
 });
 
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
+  window.sessionStorage.clear();
 });
 
 describe("application", () => {
@@ -69,9 +71,10 @@ describe("application", () => {
     expect(screen.getByText("Chanson exemple")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Chanson exemple/ }).textContent).toContain("가수 예시 · 2020");
     expect(screen.queryByText("Artiste exemple")).toBeNull();
-    expect(screen.getAllByText("Paroles vérifiées")).toHaveLength(2);
-    expect(screen.getByText("Brouillon")).toBeInTheDocument();
-    expect(screen.getByText("Paroles manquantes")).toBeInTheDocument();
+    expect(screen.getAllByText("paroles vérifiées")).toHaveLength(2);
+    expect(screen.getByText("brouillon")).toBeInTheDocument();
+    expect(screen.getByText("sans paroles")).toBeInTheDocument();
+    expect(screen.queryByText("Paroles manquantes")).toBeNull();
 
     await user.type(screen.getByRole("searchbox", { name: "Rechercher" }), "sans paroles");
     expect(screen.getByRole("link", { name: /Sans paroles/ })).toBeInTheDocument();
@@ -80,6 +83,7 @@ describe("application", () => {
 
     await user.click(screen.getByRole("link", { name: /Chanson exemple/ }));
     expect(await screen.findByRole("heading", { name: "예시 노래" })).toBeInTheDocument();
+    expect(screen.getByText("Paroles vérifiées")).toBeInTheDocument();
     expect(document.querySelector(".song .meta")?.textContent).toBe("가수 예시 · 2020");
     expect(screen.queryByText("Artiste exemple")).toBeNull();
     expect(screen.queryByText(/\([^)]*exemple\)/)).toBeNull();
@@ -117,6 +121,7 @@ describe("application", () => {
     await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
     await user.click(await screen.findByRole("link", { name: /Sans paroles/ }));
     expect(await screen.findByText("Les paroles de cette chanson ne sont pas encore disponibles.")).toBeInTheDocument();
+    expect(screen.getByText("Paroles manquantes")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Jeton" }));
     expect(screen.getByRole("dialog", { name: "Oublier le jeton\u202F?" })).toBeInTheDocument();
@@ -333,6 +338,83 @@ describe("application", () => {
     scrollIntoView.mockRestore();
   });
 
+  it("regroupe, trie, compte et conserve q, tri et artiste au retour", async () => {
+    const user = userEvent.setup({ delay: 0 });
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    render(<App deps={{ fetchImpl: mockCatalog(directoryCatalog()) }} />);
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+
+    expect(sectionLabels()).toEqual(["ㄱ", "ㄴ", "ㄷ", "#"]);
+    expect(sectionTitles("ㄱ")).toEqual(["가나", "까나"]);
+    expect(sectionTitles("ㄴ")).toEqual(["나나"]);
+    expect(sectionTitles("ㄷ")).toEqual(["다나", "따나"]);
+    expect(sectionTitles("#")).toEqual(["★별", "ABC"]);
+    expect(screen.queryByRole("heading", { name: "ㄹ" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Titre" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Artiste" })).toHaveAttribute("aria-pressed", "false");
+    expect(document.querySelector(".count")?.textContent).toBe("7 chansons");
+    expect(screen.getByRole("link", { name: /Titre ga/ }).textContent).toContain("가수 가 · 1991");
+
+    await user.type(screen.getByRole("searchbox", { name: "Rechercher" }), "Titre");
+    expect(sectionLabels()).toEqual(["ㄱ", "ㄴ", "ㄷ", "#"]);
+    await user.clear(screen.getByRole("searchbox", { name: "Rechercher" }));
+
+    await user.type(screen.getByRole("searchbox", { name: "Rechercher" }), "kka");
+    expect(sectionLabels()).toEqual(["ㄱ"]);
+    expect(sectionTitles("ㄱ")).toEqual(["까나"]);
+    expect(new URLSearchParams(window.location.search).get("q")).toBeNull();
+    await waitFor(() => {
+      expect(new URLSearchParams(window.location.search).get("q")).toBe("kka");
+    });
+    expect(document.querySelector(".count")?.textContent).toBe("1 chanson");
+
+    await user.click(screen.getByRole("button", { name: "Artiste" }));
+    expect(screen.getByRole("button", { name: "Artiste" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Titre" })).toHaveAttribute("aria-pressed", "false");
+    expect(sectionLabels()).toEqual(["가수 가"]);
+    expect(new URLSearchParams(window.location.search).get("tri")).toBe("artiste");
+    expect(new URLSearchParams(window.location.search).get("q")).toBe("kka");
+
+    await user.click(screen.getByRole("button", { name: /가수 가, 2 chansons/ }));
+    const params = () => new URLSearchParams(window.location.search);
+    expect(params().get("artiste")).toBe("가수 가");
+    expect(params().get("q")).toBe("kka");
+    expect(params().get("tri")).toBe("artiste");
+    expect(document.querySelector(".count")?.textContent).toBe("1 chanson · 가수 가");
+
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
+    const scrollY = vi.spyOn(window, "scrollY", "get").mockReturnValue(240);
+    await user.click(screen.getByRole("link", { name: /Titre kka/ }));
+    const back = await screen.findByRole("link", { name: "Retour au répertoire" });
+    const backParams = new URL(back.getAttribute("href") ?? "", "http://localhost").searchParams;
+    expect(backParams.get("q")).toBe("kka");
+    expect(backParams.get("tri")).toBe("artiste");
+    expect(backParams.get("artiste")).toBe("가수 가");
+    const artistParams = new URL(screen.getByRole("link", { name: "가수 가" }).getAttribute("href") ?? "", "http://localhost").searchParams;
+    expect(artistParams.get("q")).toBe("kka");
+    expect(artistParams.get("tri")).toBe("artiste");
+    expect(artistParams.get("artiste")).toBe("가수 가");
+    expect(storageKeys().some((key) => key.includes("q=kka") && key.includes("tri=artiste"))).toBe(true);
+
+    await user.click(back);
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+    expect(params().get("q")).toBe("kka");
+    expect(params().get("tri")).toBe("artiste");
+    expect(params().get("artiste")).toBe("가수 가");
+    expect(screen.getByRole("button", { name: "Artiste" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /가수 가, 2 chansons/ })).toHaveAttribute("aria-pressed", "true");
+    expect(document.querySelector(".count")?.textContent).toBe("1 chanson · 가수 가");
+    expect(sectionTitles("가수 가")).toEqual(["까나"]);
+    expect(scrollTo).toHaveBeenCalledWith(0, 240);
+
+    await user.click(screen.getByRole("button", { name: "Titre" }));
+    expect(new URLSearchParams(window.location.search).get("tri")).toBeNull();
+    expect(new URLSearchParams(window.location.search).get("q")).toBe("kka");
+    expect(new URLSearchParams(window.location.search).get("artiste")).toBe("가수 가");
+    scrollTo.mockRestore();
+    scrollY.mockRestore();
+  });
+
   it("oublie un jeton stocké qui n’a pas le bon format", () => {
     window.localStorage.setItem(TOKEN_STORAGE_KEY, "pas-un-jeton");
     const fetchImpl = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response("non", { status: 500 }));
@@ -342,6 +424,62 @@ describe("application", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 });
+
+function directoryCatalog() {
+  const body = structuredClone(fixture) as { songs: Array<Record<string, unknown>> };
+  body.songs = [
+    entry("ga", "가나", "Titre ga", "가수 가", 1991, "verified"),
+    entry("kka", "까나", "Titre kka", "가수 가", null, "draft"),
+    entry("na", "나나", "Titre na", "가수 나", null, "missing"),
+    entry("da", "다나", "Titre da", "가수 다", 2001, "verified"),
+    entry("tta", "따나", "Titre tta", "가수 다", null, "verified"),
+    entry("abc", "ABC", "Titre latin", "가수 하", null, "missing"),
+    entry("star", "★별", "Titre etoile", "가수 하", null, "missing"),
+  ];
+  return body;
+}
+
+function entry(
+  id: string,
+  title: string,
+  titleFr: string,
+  artist: string,
+  year: number | null,
+  lyricsStatus: string,
+) {
+  return {
+    id,
+    spotifyTrackId: null,
+    title,
+    titleFr,
+    artist,
+    year,
+    lyricsStatus,
+    lines: [],
+    units: [],
+    sources: [],
+    context: null,
+    sourcesNote: null,
+  };
+}
+
+function storageKeys(): string[] {
+  const keys: string[] = [];
+  for (let index = 0; index < window.sessionStorage.length; index += 1) {
+    const key = window.sessionStorage.key(index);
+    if (key) keys.push(key);
+  }
+  return keys;
+}
+
+function sectionLabels(): string[] {
+  return screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent ?? "");
+}
+
+function sectionTitles(label: string): string[] {
+  const section = screen.getByRole("heading", { name: label, level: 2 }).closest("section");
+  return [...(section?.querySelectorAll(".song-title") ?? [])].map((node) => node.textContent ?? "");
+}
 
 function mockCatalog(body: unknown = fixture) {
   return vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => fileBody(JSON.stringify(body)));

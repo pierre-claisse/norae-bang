@@ -1,22 +1,89 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { artistChoices, artistQuery, filterSongs } from "../domain/filter";
+import {
+  artistChoices,
+  filterSongs,
+  listQueryFromParams,
+  listScrollKey,
+  songPath,
+  type ListQuery,
+} from "../domain/filter";
 import { frenchTypography } from "../domain/french";
-import type { Song } from "../domain/schema";
-import { statusLabel } from "../domain/status";
+import type { LyricsStatus, Song } from "../domain/schema";
+import { groupSongs, type SongSort } from "../domain/sections";
 import { useDocumentTitle } from "./useDocumentTitle";
 
+const QUERY_DEBOUNCE_MS = 150;
+
 export function SongListPage({ songs }: { songs: readonly Song[] }) {
-  const [query, setQuery] = useState("");
   const [params, setParams] = useSearchParams();
-  const artistParam = params.get("artiste");
-  const artist = artistParam && artistParam.trim() !== "" ? artistParam : null;
+  const urlQuery = listQueryFromParams(params);
+  const search = params.toString();
+  const [query, setQuery] = useState(urlQuery.q);
+  const artist = urlQuery.artiste;
+  const sort = urlQuery.tri;
   const artists = useMemo(() => artistChoices(songs), [songs]);
   const filtered = useMemo(() => filterSongs(songs, query, artist), [songs, query, artist]);
+  const sections = useMemo(() => groupSongs(filtered, sort), [filtered, sort]);
+  const liveQuery = useMemo<ListQuery>(() => ({ q: query, tri: sort, artiste: artist }), [query, sort, artist]);
+  const scrollKey = useRef<string | null>(null);
+  if (scrollKey.current === null) {
+    scrollKey.current = listScrollKey(window.location.pathname, urlQuery);
+  }
   useDocumentTitle("Répertoire · norae-bang");
   const searching = query.trim().length > 0;
+  const rootRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ start: false, end: false });
+
+  useEffect(() => {
+    setQuery(urlQuery.q);
+  }, [urlQuery.q]);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    const current = new URLSearchParams(search).get("q") ?? "";
+    if (trimmed === current) return;
+    const handle = window.setTimeout(() => {
+      setParams(
+        (previous) => {
+          const updated = new URLSearchParams(previous);
+          if (trimmed) updated.set("q", trimmed);
+          else updated.delete("q");
+          return updated;
+        },
+        { replace: true },
+      );
+    }, QUERY_DEBOUNCE_MS);
+    return () => window.clearTimeout(handle);
+  }, [query, search, setParams]);
+
+  useEffect(() => {
+    // Une seule restauration, au montage : la clé est celle de l’URL d’arrivée.
+    const key = scrollKey.current;
+    if (!key) return;
+    const raw = sessionStorage.getItem(key);
+    if (raw === null) return;
+    const y = Number(raw);
+    if (!Number.isFinite(y)) return;
+    window.scrollTo(0, y);
+    const frame = window.requestAnimationFrame(() => window.scrollTo(0, y));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    const bar = barRef.current;
+    const root = rootRef.current;
+    if (!bar || !root || typeof ResizeObserver === "undefined") return;
+    const apply = () => {
+      root.style.setProperty("--bar-h", `${Math.ceil(bar.getBoundingClientRect().height)}px`);
+    };
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(bar);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const row = rowRef.current;
@@ -52,115 +119,174 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
   }, [artist, artists]);
 
   function chooseArtist(next: string | null) {
-    const updated = new URLSearchParams(params);
-    if (next) updated.set("artiste", next);
-    else updated.delete("artiste");
-    setParams(updated, { replace: true });
+    setParams(
+      (previous) => {
+        const updated = new URLSearchParams(previous);
+        if (next) updated.set("artiste", next);
+        else updated.delete("artiste");
+        return updated;
+      },
+      { replace: true },
+    );
+  }
+
+  function chooseSort(next: SongSort) {
+    setParams(
+      (previous) => {
+        const updated = new URLSearchParams(previous);
+        switch (next) {
+          case "titre":
+            updated.delete("tri");
+            break;
+          case "artiste":
+            updated.set("tri", "artiste");
+            break;
+          default: {
+            const unexpected: never = next;
+            return unexpected;
+          }
+        }
+        return updated;
+      },
+      { replace: true },
+    );
+  }
+
+  function rememberScroll() {
+    const key = listScrollKey(window.location.pathname, liveQuery);
+    sessionStorage.setItem(key, String(window.scrollY));
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (current !== key) window.history.replaceState(window.history.state, "", key);
   }
 
   return (
-    <>
-      <h1>Répertoire</h1>
-      <div className="search">
-        <label className="sr-only" htmlFor="recherche">Rechercher</label>
-        <div className="search-field">
-          <input
-            id="recherche"
-            type="search"
-            value={query}
-            placeholder="Titre (hangeul ou français), artiste"
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          {searching ? (
-            <button type="button" className="clear-search" aria-label="Effacer la recherche" onClick={() => setQuery("")}>
-              <span aria-hidden="true">×</span>
+    <div className="directory" ref={rootRef}>
+      <h1 className="directory-title">Répertoire</h1>
+      <div className="list-bar" ref={barRef}>
+        <div className="search">
+          <label className="sr-only" htmlFor="recherche">
+            Rechercher
+          </label>
+          <div className="search-field">
+            <input
+              id="recherche"
+              type="search"
+              value={query}
+              placeholder="Titre (hangeul ou français), artiste"
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            {searching ? (
+              <button type="button" className="clear-search" aria-label="Effacer la recherche" onClick={() => setQuery("")}>
+                <span aria-hidden="true">×</span>
+              </button>
+            ) : null}
+          </div>
+        </div>
+        <div className="artist-scroller">
+          <div className="artist-row" role="group" aria-label="Filtrer par artiste" ref={rowRef}>
+            <button type="button" className="artist-chip" aria-pressed={artist === null} onClick={() => chooseArtist(null)}>
+              Tous
             </button>
-          ) : null}
+            {artists.map((choice) => (
+              <button
+                key={choice.name}
+                type="button"
+                className="artist-chip"
+                lang="ko"
+                aria-pressed={artist === choice.name}
+                aria-label={artistChipLabel(choice.name, choice.count)}
+                onClick={() => chooseArtist(choice.name)}
+              >
+                <span>{choice.name}</span>
+                {choice.count >= 2 ? <span className="artist-count">{choice.count}</span> : null}
+              </button>
+            ))}
+          </div>
+          <span className="artist-fade artist-fade-start" data-more={edges.start ? "true" : "false"} aria-hidden="true" />
+          <span className="artist-fade artist-fade-end" data-more={edges.end ? "true" : "false"} aria-hidden="true" />
+        </div>
+        <div className="list-tools">
+          <p className="count" aria-live="polite">
+            {filtered.length > 0 ? (
+              <>
+                <span>{countLabel(filtered.length)}</span>
+                {artist ? (
+                  <>
+                    <span> · </span>
+                    <span lang="ko">{artist}</span>
+                  </>
+                ) : null}
+              </>
+            ) : (
+              emptyLabel(searching, artist !== null)
+            )}
+          </p>
+          <div className="sort-switch" role="group" aria-label="Trier">
+            <button type="button" className="sort-option" aria-pressed={sort === "titre"} onClick={() => chooseSort("titre")}>
+              Titre
+            </button>
+            <button type="button" className="sort-option" aria-pressed={sort === "artiste"} onClick={() => chooseSort("artiste")}>
+              Artiste
+            </button>
+          </div>
         </div>
       </div>
-      <div className="artist-scroller">
-        <div className="artist-row" role="group" aria-label="Filtrer par artiste" ref={rowRef}>
-          <button type="button" className="artist-chip" aria-pressed={artist === null} onClick={() => chooseArtist(null)}>
-            Tous
-          </button>
-          {artists.map((choice) => (
-            <button
-              key={choice.name}
-              type="button"
-              className="artist-chip"
-              lang="ko"
-              aria-pressed={artist === choice.name}
-              aria-label={artistChipLabel(choice.name, choice.count)}
-              onClick={() => chooseArtist(choice.name)}
-            >
-              <span>{choice.name}</span>
-              {choice.count >= 2 ? <span className="artist-count">{choice.count}</span> : null}
-            </button>
-          ))}
-        </div>
-        <span className="artist-fade artist-fade-start" data-more={edges.start ? "true" : "false"} aria-hidden="true" />
-        <span className="artist-fade artist-fade-end" data-more={edges.end ? "true" : "false"} aria-hidden="true" />
-      </div>
-      {filtered.length > 0 ? (
-        <p className="count" aria-live="polite">
-          <span>{countLabel(filtered.length)}</span>
-          {artist ? (
-            <>
-              <span> · </span>
-              <span lang="ko">{artist}</span>
-            </>
-          ) : null}
-        </p>
-      ) : (
-        <p className="count" aria-live="polite">
-          {emptyLabel(searching, artist !== null)}
-        </p>
-      )}
       {filtered.length === 0 && searching ? (
         <button type="button" className="text-link" onClick={() => setQuery("")}>
           Effacer la recherche
         </button>
       ) : null}
-      {filtered.length > 0 ? (
-        <ul className="songs">
-          {filtered.map((song) => (
-            <li key={song.id}>
-              <Link to={`/chanson/${song.id}${artistQuery(artist)}`} className="song-card">
-                <span className="song-body">
-                  <span className="song-heading">
+      {sections.map((section) => (
+        <section className="directory-section" key={section.id}>
+          <h2 lang={section.label === "#" ? undefined : "ko"}>{section.label}</h2>
+          <ul className="songs">
+            {section.songs.map((song) => (
+              <li key={song.id}>
+                <Link to={songPath(song.id, liveQuery)} className="song-row" onClick={rememberScroll}>
+                  <span className="song-line">
                     <span className="song-title" lang="ko">
                       {song.title}
                     </span>
-                    <span className="badge" data-status={song.lyricsStatus}>
-                      {statusLabel(song.lyricsStatus)}
+                    <RowStatus status={song.lyricsStatus} />
+                  </span>
+                  <span className="song-sub">
+                    <span className="title-fr" lang={song.titleFr ? "fr" : undefined}>
+                      {song.titleFr ? frenchTypography(song.titleFr) : ""}
+                    </span>
+                    <span className="song-byline">
+                      {song.titleFr ? <span aria-hidden="true"> · </span> : null}
+                      <span lang="ko">{song.artist}</span>
+                      {song.year !== null ? (
+                        <>
+                          <span aria-hidden="true"> · </span>
+                          <span className="song-year">{song.year}</span>
+                        </>
+                      ) : null}
                     </span>
                   </span>
-                  {song.titleFr ? (
-                    <span className="title-fr" lang="fr">
-                      {frenchTypography(song.titleFr)}
-                    </span>
-                  ) : null}
-                  <span className="meta">
-                    <span lang="ko">{song.artist}</span>
-                    {song.year !== null ? <span> · {song.year}</span> : null}
-                  </span>
-                </span>
-                <Chevron />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
   );
 }
 
-function Chevron() {
-  return (
-    <svg className="chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M9 6.5 15 12l-6 5.5" />
-    </svg>
-  );
+function RowStatus({ status }: { status: LyricsStatus }) {
+  switch (status) {
+    case "verified":
+      return <span className="sr-only">paroles vérifiées</span>;
+    case "draft":
+      return <span className="row-status">brouillon</span>;
+    case "missing":
+      return <span className="row-status">sans paroles</span>;
+    default: {
+      const unexpected: never = status;
+      return unexpected;
+    }
+  }
 }
 
 function countLabel(count: number): string {

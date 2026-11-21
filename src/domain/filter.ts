@@ -1,4 +1,13 @@
 import type { Song } from "./schema";
+import type { SongSort } from "./sections";
+
+export type { SongSort } from "./sections";
+
+export type ListQuery = {
+  q: string;
+  tri: SongSort;
+  artiste: string | null;
+};
 
 export type ArtistChoice = {
   name: string;
@@ -22,14 +31,46 @@ export function filterSongs(songs: readonly Song[], query: string, artist: strin
   return scoped.filter((song) => haystack(song).includes(needle));
 }
 
-export function artistQuery(artist: string | null): string {
-  if (!artist) return "";
-  return `?${new URLSearchParams({ artiste: artist }).toString()}`;
+export function parseSort(value: string | null): SongSort {
+  if (value === "artiste") return "artiste";
+  return "titre";
+}
+
+export function listQueryFromParams(params: URLSearchParams): ListQuery {
+  const artist = params.get("artiste");
+  return {
+    q: params.get("q") ?? "",
+    tri: parseSort(params.get("tri")),
+    artiste: artist && artist.trim() !== "" ? artist : null,
+  };
+}
+
+export function listSearchParams(query: ListQuery): URLSearchParams {
+  const params = new URLSearchParams();
+  const q = query.q.trim();
+  if (q) params.set("q", q);
+  if (query.tri === "artiste") params.set("tri", "artiste");
+  if (query.artiste) params.set("artiste", query.artiste);
+  return params;
+}
+
+export function listPath(query: ListQuery): string {
+  const text = listSearchParams(query).toString();
+  return text ? `/?${text}` : "/";
+}
+
+export function songPath(songId: string, query: ListQuery): string {
+  const text = listSearchParams(query).toString();
+  return text ? `/chanson/${songId}?${text}` : `/chanson/${songId}`;
+}
+
+export function listScrollKey(pathname: string, query: ListQuery): string {
+  const text = listSearchParams(query).toString();
+  return text ? `${pathname}?${text}` : pathname;
 }
 
 export function artistListPath(artist: string | null): string {
-  const query = artistQuery(artist);
-  return query ? `/${query}` : "/";
+  return listPath({ q: "", tri: "titre", artiste: artist });
 }
 
 function haystack(song: Song): string {

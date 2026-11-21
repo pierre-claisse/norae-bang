@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { artistChoices, artistListPath, filterSongs } from "../src/domain/filter";
+import { artistChoices, artistListPath, filterSongs, listPath, listScrollKey, parseSort, songPath } from "../src/domain/filter";
 import type { Song } from "../src/domain/schema";
 import fixture from "./fixtures/catalog.json";
 
@@ -44,5 +44,22 @@ describe("recherche", () => {
     const path = artistListPath("가수 예시");
     expect(path.startsWith("/?artiste=")).toBe(true);
     expect(new URLSearchParams(path.slice(2)).get("artiste")).toBe("가수 예시");
+  });
+
+  it("aligne q, tri et artiste sur l’URL, dans cet ordre", () => {
+    expect(parseSort(null)).toBe("titre");
+    expect(parseSort("titre")).toBe("titre");
+    expect(parseSort("artiste")).toBe("artiste");
+    expect(parseSort("autre")).toBe("titre");
+
+    const path = listPath({ q: "déjà vu", tri: "artiste", artiste: "가수 예시" });
+    const params = new URLSearchParams(path.slice(2));
+    expect([...params.keys()]).toEqual(["q", "tri", "artiste"]);
+    expect(params.get("q")).toBe("déjà vu");
+    expect(params.get("tri")).toBe("artiste");
+    expect(params.get("artiste")).toBe("가수 예시");
+    expect(listPath({ q: "  ", tri: "titre", artiste: null })).toBe("/");
+    expect(songPath("chanson-exemple", { q: "a", tri: "titre", artiste: null })).toBe("/chanson/chanson-exemple?q=a");
+    expect(listScrollKey("/norae-bang/", { q: "a", tri: "artiste", artiste: null })).toBe("/norae-bang/?q=a&tri=artiste");
   });
 });
