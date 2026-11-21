@@ -520,8 +520,7 @@ button.favorite-filter[aria-pressed="true"] {
 }
 
 .favorite-filter .icon,
-.song-favorite .icon,
-.tile-favorite .icon {
+.song-favorite .icon {
   flex: none;
   width: 1.15rem;
   height: 1.15rem;
@@ -685,7 +684,6 @@ button.favorite-filter[aria-pressed="true"] {
 }
 
 .songs.tiles > li {
-  position: relative;
   display: flex;
   min-width: 0;
   border-bottom: 0;
@@ -699,8 +697,9 @@ button.favorite-filter[aria-pressed="true"] {
   justify-content: center;
   width: 100%;
   height: 100%;
-  min-height: 72px;
+  min-height: 52px;
   padding: 6px 10px;
+  overflow: hidden;
   background: #1e1a17;
   border-radius: 10px;
   color: inherit;
@@ -726,7 +725,6 @@ button.favorite-filter[aria-pressed="true"] {
   line-height: 22px;
   white-space: normal;
   word-break: keep-all;
-  padding-right: 2rem;
 }
 
 .tile-title.has-badge {
@@ -746,8 +744,6 @@ button.favorite-filter[aria-pressed="true"] {
   font-size: 13px;
   line-height: 18px;
   white-space: nowrap;
-  padding-right: 2rem;
-  overflow: hidden;
 }
 
 .tile-meta > span {
@@ -771,37 +767,34 @@ button.favorite-filter[aria-pressed="true"] {
 
 .tile .row-status {
   position: absolute;
+  z-index: 1;
   top: 6px;
   right: 8px;
 }
 
-button.tile-favorite {
-  position: absolute;
+.tile-title,
+.tile-meta {
+  position: relative;
   z-index: 1;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  width: 44px;
-  height: 44px;
-  min-height: 44px;
-  padding: 0 8px 8px 0;
-  border: 0;
-  border-radius: 0 0 10px 0;
-  background: transparent;
-  color: #b8ac98;
 }
 
-button.tile-favorite:hover,
-button.tile-favorite:focus-visible {
-  color: var(--cream);
-}
-
-button.tile-favorite[aria-pressed="true"],
-button.tile-favorite[aria-pressed="true"]:hover,
-button.tile-favorite[aria-pressed="true"]:focus-visible {
+.tile-heart {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: -8px;
+  width: 54px;
+  height: 54px;
+  transform: translateY(-50%);
   color: var(--rose);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.tile-heart .icon {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .song-year {

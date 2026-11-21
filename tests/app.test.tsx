@@ -545,22 +545,33 @@ describe("application", () => {
     expect(artistGroup.contains(filter)).toBe(false);
     expect(filter).toHaveAttribute("aria-pressed", "false");
     expect(filter.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    expect(screen.queryByRole("button", { name: /Ajouter aux favoris/ })).toBeNull();
+    expect(document.querySelector(".tile-heart")).toBeNull();
 
-    const addGa = screen.getByRole("button", { name: "Ajouter aux favoris, 가나" });
+    await user.click(screen.getByRole("link", { name: /가나/ }));
+    const addGa = await screen.findByRole("button", { name: "Ajouter aux favoris, 가나" });
     expect(addGa).toHaveAttribute("aria-pressed", "false");
-    expect(addGa.querySelector(".heart")).toHaveAttribute("data-filled", "false");
     await user.click(addGa);
-    expect(screen.getByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
     expect(addGa).toHaveAttribute("aria-pressed", "true");
     expect(addGa).toHaveAccessibleName("Retirer des favoris, 가나");
-    expect(addGa.querySelector(".heart")).toHaveAttribute("data-filled", "true");
+    await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
+    const ga = await screen.findByRole("link", { name: /가나/ });
+    expect(ga).toHaveAccessibleName(/favorite/);
+    const gaHeart = ga.querySelector(".tile-heart");
+    expect(gaHeart).toHaveAttribute("aria-hidden", "true");
+    expect(gaHeart?.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByRole("link", { name: /나나/ }).querySelector(".tile-heart")).toBeNull();
     expect(JSON.parse(window.localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "null")).toEqual(["ga"]);
     expect(document.querySelector(".count")?.textContent).toBe("7 chansons");
 
-    await user.click(screen.getByRole("button", { name: "Ajouter aux favoris, 다나" }));
+    await user.click(screen.getByRole("link", { name: /다나/ }));
+    await user.click(await screen.findByRole("button", { name: "Ajouter aux favoris, 다나" }));
+    await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
     expect(JSON.parse(window.localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "null")).toEqual(["da", "ga"]);
-    await user.click(filter);
-    expect(filter).toHaveAttribute("aria-pressed", "true");
+    const favoris = screen.getByRole("button", { name: "Favoris" });
+    await user.click(favoris);
+    expect(favoris).toHaveAttribute("aria-pressed", "true");
     expect(new URLSearchParams(window.location.search).get("favoris")).toBe("1");
     expect(document.querySelector(".count")?.textContent).toBe("2 favorites");
     expect(sectionTitles("ㄱ")).toEqual(["가나"]);
@@ -605,10 +616,14 @@ describe("application", () => {
     render(<App deps={{ fetchImpl: mockCatalog(directoryCatalog()) }} />);
     expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Favoris" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "Retirer des favoris, 다나" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("link", { name: /다나/ })).toHaveAccessibleName(/favorite/);
     expect(screen.queryByRole("link", { name: /나나/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Retirer des favoris/ })).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "Retirer des favoris, 다나" }));
+    await user.click(screen.getByRole("link", { name: /다나/ }));
+    await user.click(await screen.findByRole("button", { name: "Retirer des favoris, 다나" }));
+    await user.click(screen.getByRole("link", { name: "Retour au répertoire" }));
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
     expect(document.querySelector(".count")?.textContent).toBe("Aucune chanson dans les favoris.");
     await user.click(screen.getByRole("button", { name: /가수 가, 2 chansons/ }));
     expect(document.querySelector(".count")?.textContent).toBe("Aucune favorite pour cet artiste.");

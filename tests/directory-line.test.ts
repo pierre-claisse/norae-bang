@@ -35,7 +35,7 @@ describe("tuiles du répertoire", () => {
     expect(getComputedStyle(list).alignItems).toBe("stretch");
     expect(getComputedStyle(cell).gridColumn).not.toBe("1 / -1");
     expect(heading.parentElement).toBe(section);
-    expect(getComputedStyle(tile).minHeight).toBe("72px");
+    expect(getComputedStyle(tile).minHeight).toBe("52px");
     expect(css).toMatch(/\.tile-title\s*\{[^}]*-webkit-line-clamp:\s*2/);
     expect(css).toMatch(/\.tile-title\s*\{[^}]*word-break:\s*keep-all/);
     expect(getComputedStyle(title).wordBreak).toBe("keep-all");
@@ -75,22 +75,56 @@ describe("tuiles du répertoire", () => {
     expect(getComputedStyle(arrow).textDecorationLine).not.toBe("underline");
   });
 
-  it("donne au cœur favori une cible de 44px, rose seulement lorsqu’il est rempli", () => {
+  it("laisse la hauteur d’une tuile identique avec ou sans cœur en filigrane", () => {
     document.head.append(Object.assign(document.createElement("style"), { textContent: css }));
-    const pressed = document.createElement("button");
-    pressed.className = "tile-favorite";
-    pressed.setAttribute("aria-pressed", "true");
-    const idle = document.createElement("button");
-    idle.className = "tile-favorite";
-    idle.setAttribute("aria-pressed", "false");
-    document.body.append(pressed, idle);
+    const list = document.createElement("ol");
+    list.className = "songs tiles";
+    list.style.width = "380px";
+    const plain = sampleTile(false);
+    const marked = sampleTile(true);
+    list.append(plain, marked);
+    document.body.append(list);
 
-    const pressedStyle = getComputedStyle(pressed);
-    expect(pressedStyle.width).toBe("44px");
-    expect(pressedStyle.height).toBe("44px");
-    expect(pressedStyle.color.replace(/\s/g, "").toLowerCase()).toMatch(/e86a78|232,106,120/);
-    expect(getComputedStyle(idle).color.replace(/\s/g, "").toLowerCase()).toMatch(/b8ac98|184,172,152/);
-    expect(css).toMatch(/:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--brass\)/);
-    expect(css).not.toMatch(/button\.tile-favorite[^{]*\{[^}]*outline:\s*none/);
+    const plainTile = plain.querySelector(".tile");
+    const markedTile = marked.querySelector(".tile");
+    const heart = marked.querySelector(".tile-heart");
+    const plainTitle = plainTile?.querySelector(".tile-title");
+    const plainMeta = plainTile?.querySelector(".tile-meta");
+    if (!plainTile || !markedTile || !heart || !plainTitle || !plainMeta) throw new Error("tuile introuvable");
+
+    expect(getComputedStyle(plainTile).minHeight).toBe("52px");
+    expect(getComputedStyle(markedTile).minHeight).toBe("52px");
+    expect(markedTile.getBoundingClientRect().height).toBe(plainTile.getBoundingClientRect().height);
+    expect(Number.parseFloat(getComputedStyle(plainTitle).paddingRight) || 0).toBe(0);
+    expect(Number.parseFloat(getComputedStyle(plainMeta).paddingRight) || 0).toBe(0);
+
+    const heartStyle = getComputedStyle(heart);
+    expect(heartStyle.position).toBe("absolute");
+    expect(heartStyle.pointerEvents).toBe("none");
+    expect(heartStyle.color.replace(/\s/g, "").toLowerCase()).toMatch(/e86a78|232,106,120/);
+    expect(Number.parseFloat(heartStyle.opacity)).toBeLessThanOrEqual(0.32);
+    expect(Number.parseFloat(heartStyle.opacity)).toBeGreaterThan(0);
+    expect(heart.getAttribute("aria-hidden")).toBe("true");
   });
 });
+
+function sampleTile(favorite: boolean): HTMLLIElement {
+  const cell = document.createElement("li");
+  const tile = document.createElement("a");
+  tile.className = "tile";
+  if (favorite) {
+    const heart = document.createElement("span");
+    heart.className = "tile-heart";
+    heart.setAttribute("aria-hidden", "true");
+    tile.append(heart);
+  }
+  const title = document.createElement("span");
+  title.className = "tile-title";
+  title.textContent = "가나";
+  const meta = document.createElement("span");
+  meta.className = "tile-meta";
+  meta.textContent = "가수 가 · 1991";
+  tile.append(title, meta);
+  cell.append(tile);
+  return cell;
+}

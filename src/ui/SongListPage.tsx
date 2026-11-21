@@ -20,7 +20,7 @@ import {
   type SortDirection,
   type SortKey,
 } from "../domain/sections";
-import { FavoriteButton, HeartIcon } from "./FavoriteButton";
+import { HeartIcon } from "./FavoriteButton";
 import { useDocumentTitle } from "./useDocumentTitle";
 
 const QUERY_DEBOUNCE_MS = 150;
@@ -272,7 +272,6 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
           sort={sort}
           liveQuery={liveQuery}
           favorites={favorites.ids}
-          onToggleFavorite={favorites.toggle}
           onOpen={rememberScroll}
         />
       ))}
@@ -332,14 +331,12 @@ function DirectorySection({
   sort,
   liveQuery,
   favorites,
-  onToggleFavorite,
   onOpen,
 }: {
   section: SongSection;
   sort: SongSort;
   liveQuery: ListQuery;
   favorites: ReadonlySet<string>;
-  onToggleFavorite: (id: string) => void;
   onOpen: () => void;
 }) {
   const headingId = useId();
@@ -356,7 +353,6 @@ function DirectorySection({
               sort={sort}
               to={songPath(song.id, liveQuery)}
               favorite={favorites.has(song.id)}
-              onToggleFavorite={() => onToggleFavorite(song.id)}
               onOpen={onOpen}
             />
           </li>
@@ -371,37 +367,38 @@ function Tile({
   sort,
   to,
   favorite,
-  onToggleFavorite,
   onOpen,
 }: {
   song: Song;
   sort: SongSort;
   to: string;
   favorite: boolean;
-  onToggleFavorite: () => void;
   onOpen: () => void;
 }) {
   const parts = sublineTail(song, sort);
   return (
-    <>
-      <Link to={to} className="tile" onClick={onOpen}>
-        <span className={titleClass(song.lyricsStatus)} lang="ko">
-          {song.title}
+    <Link to={to} className="tile" onClick={onOpen}>
+      {favorite ? (
+        <span className="tile-heart" aria-hidden="true">
+          <HeartIcon filled />
         </span>
-        {parts.length > 0 ? (
-          <span className="tile-meta">
-            {parts.map((part, index) => (
-              <Fragment key={part.key}>
-                {index > 0 ? <PartSep /> : null}
-                {part.node}
-              </Fragment>
-            ))}
-          </span>
-        ) : null}
-        <RowStatus status={song.lyricsStatus} />
-      </Link>
-      <FavoriteButton className="tile-favorite" pressed={favorite} title={song.title} onToggle={onToggleFavorite} />
-    </>
+      ) : null}
+      <span className={titleClass(song.lyricsStatus)} lang="ko">
+        {song.title}
+      </span>
+      {parts.length > 0 ? (
+        <span className="tile-meta">
+          {parts.map((part, index) => (
+            <Fragment key={part.key}>
+              {index > 0 ? <PartSep /> : null}
+              {part.node}
+            </Fragment>
+          ))}
+        </span>
+      ) : null}
+      {favorite ? <span className="sr-only">favorite</span> : null}
+      <RowStatus status={song.lyricsStatus} />
+    </Link>
   );
 }
 
