@@ -8,7 +8,6 @@ import {
   songPath,
   type ListQuery,
 } from "../domain/filter";
-import { frenchTypography } from "../domain/french";
 import type { LyricsStatus, Song } from "../domain/schema";
 import { groupSongs, type SongSection, type SongSort } from "../domain/sections";
 import { useDocumentTitle } from "./useDocumentTitle";
@@ -280,27 +279,16 @@ function DirectorySection({
 }
 
 function SongSub({ song, sort }: { song: Song; sort: SongSort }) {
-  const title = song.titleFr ? frenchTypography(song.titleFr) : null;
-  const tail = sublineTail(song, sort);
-  if (!title && tail.length === 0) return null;
+  const parts = sublineTail(song, sort);
+  if (parts.length === 0) return null;
   return (
     <span className="song-sub">
-      {title ? (
-        <span className="title-fr" lang="fr">
-          {title}
-        </span>
-      ) : null}
-      {tail.length > 0 ? (
-        <span className="song-byline">
-          {title ? <PartSep /> : null}
-          {tail.map((part, index) => (
-            <Fragment key={part.key}>
-              {index > 0 ? <PartSep /> : null}
-              {part.node}
-            </Fragment>
-          ))}
-        </span>
-      ) : null}
+      {parts.map((part, index) => (
+        <Fragment key={part.key}>
+          {index > 0 ? <PartSep /> : null}
+          {part.node}
+        </Fragment>
+      ))}
     </span>
   );
 }
