@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../src/App";
@@ -546,7 +546,7 @@ describe("application", () => {
     expect(filter).toHaveAttribute("aria-pressed", "false");
     expect(filter.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
     expect(screen.queryByRole("button", { name: /Ajouter aux favoris/ })).toBeNull();
-    expect(document.querySelector(".tile-heart")).toBeNull();
+    expect(document.querySelector(".tile.is-favorite")).toBeNull();
 
     await user.click(screen.getByRole("link", { name: /가나/ }));
     const addGa = await screen.findByRole("button", { name: "Ajouter aux favoris, 가나" });
@@ -560,7 +560,7 @@ describe("application", () => {
     const gaHeart = ga.querySelector(".tile-heart");
     expect(gaHeart).toHaveAttribute("aria-hidden", "true");
     expect(gaHeart?.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
-    expect(screen.getByRole("link", { name: /나나/ }).querySelector(".tile-heart")).toBeNull();
+    expect(screen.getByRole("link", { name: /나나/ }).classList.contains("is-favorite")).toBe(false);
     expect(JSON.parse(window.localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "null")).toEqual(["ga"]);
     expect(document.querySelector(".count")?.textContent).toBe("7 chansons");
 
@@ -631,6 +631,82 @@ describe("application", () => {
     expect(new URLSearchParams(window.location.search).get("favoris")).toBeNull();
     expect(document.querySelector(".count")?.textContent).toBe("2 chansons · 가수 가");
     expect(window.localStorage.getItem(FAVORITES_STORAGE_KEY)).not.toMatch(/나나|다나|parole/u);
+  });
+
+  it("bascule un favori par appui long, laisse un tap ouvrir la chanson, et annule si le doigt bouge", async () => {
+    const user = userEvent.setup({ delay: 0 });
+    const vibrate = vi.fn();
+    Object.defineProperty(navigator, "vibrate", { configurable: true, value: vibrate });
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
+    render(<App deps={{ fetchImpl: mockCatalog(directoryCatalog()) }} />);
+    expect(await screen.findByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+
+    const ga = screen.getByRole("link", { name: /가나/ });
+    expect(fireEvent.contextMenu(ga)).toBe(false);
+
+    vi.useFakeTimers();
+    try {
+      fireEvent.pointerDown(ga, { clientX: 20, clientY: 30, button: 0, pointerId: 1 });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(499);
+      });
+      expect(ga.classList.contains("is-favorite")).toBe(false);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1);
+      });
+      expect(ga.classList.contains("is-favorite")).toBe(true);
+      expect(vibrate).toHaveBeenCalledWith(12);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(20);
+      });
+      expect(screen.getByText("Ajouté aux favoris")).toBeInTheDocument();
+      fireEvent.pointerUp(ga, { clientX: 20, clientY: 30, button: 0, pointerId: 1 });
+      fireEvent.click(ga);
+      expect(screen.getByRole("heading", { name: "Répertoire" })).toBeInTheDocument();
+
+      const na = screen.getByRole("link", { name: /나나/ });
+      fireEvent.pointerDown(na, { clientX: 10, clientY: 10, button: 0, pointerId: 2 });
+      fireEvent.pointerMove(na, { clientX: 24, clientY: 10, button: 0, pointerId: 2 });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500);
+      });
+      expect(na.classList.contains("is-favorite")).toBe(false);
+      fireEvent.pointerUp(na, { clientX: 24, clientY: 10, button: 0, pointerId: 2 });
+    } finally {
+      vi.useRealTimers();
+    }
+
+    ga.focus();
+    fireEvent.keyDown(ga, { key: "F" });
+    expect(ga.classList.contains("is-favorite")).toBe(false);
+    await waitFor(() => {
+      expect(screen.getByText("Retiré des favoris")).toBeInTheDocument();
+    });
+
+    fireEvent.keyDown(ga, { key: "f" });
+    expect(ga.classList.contains("is-favorite")).toBe(true);
+    await user.click(screen.getByRole("button", { name: "Favoris" }));
+    expect(screen.getByRole("link", { name: /가나/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /나나/ })).toBeNull();
+
+    vi.useFakeTimers();
+    try {
+      const favorite = screen.getByRole("link", { name: /가나/ });
+      fireEvent.pointerDown(favorite, { clientX: 12, clientY: 12, button: 0, pointerId: 3 });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500);
+      });
+      fireEvent.pointerUp(favorite, { clientX: 12, clientY: 12, button: 0, pointerId: 3 });
+      fireEvent.click(favorite);
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(screen.queryByRole("link", { name: /가나/ })).toBeNull();
+    expect(screen.getByText("Aucune chanson dans les favoris.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Favoris" }));
+    await user.click(screen.getByRole("link", { name: /나나/ }));
+    expect(await screen.findByRole("heading", { name: "나나" })).toBeInTheDocument();
   });
 
   it("oublie un jeton stocké qui n’a pas le bon format", () => {

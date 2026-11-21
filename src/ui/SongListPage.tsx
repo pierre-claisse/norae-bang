@@ -1,4 +1,14 @@
-import { Fragment, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  Fragment,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   artistChoices,
@@ -24,6 +34,8 @@ import { HeartIcon } from "./FavoriteButton";
 import { useDocumentTitle } from "./useDocumentTitle";
 
 const QUERY_DEBOUNCE_MS = 150;
+const LONG_PRESS_MS = 500;
+const LONG_PRESS_MOVE_PX = 10;
 
 export function SongListPage({ songs }: { songs: readonly Song[] }) {
   const [params, setParams] = useSearchParams();
@@ -34,6 +46,13 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
   const sort = urlQuery.tri;
   const favoritesOnly = urlQuery.favoris === true;
   const favorites = useFavorites();
+  const [notice, setNotice] = useState("");
+  const noticeTimer = useRef<number | null>(null);
+  useEffect(() => {
+    return () => {
+      if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
+    };
+  }, []);
   const artists = useMemo(() => artistChoices(songs), [songs]);
   const filtered = useMemo(
     () => filterSongs(songs, query, artist, favoritesOnly ? favorites.ids : null),
@@ -173,6 +192,17 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
     );
   }
 
+  function toggleFavorite(id: string) {
+    const message = favorites.ids.has(id) ? "Retiré des favoris" : "Ajouté aux favoris";
+    favorites.toggle(id);
+    if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
+    setNotice("");
+    noticeTimer.current = window.setTimeout(() => {
+      noticeTimer.current = null;
+      setNotice(message);
+    }, 20);
+  }
+
   function rememberScroll() {
     const key = listScrollKey(window.location.pathname, liveQuery);
     sessionStorage.setItem(key, String(window.scrollY));
@@ -260,6 +290,9 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
           </div>
         </div>
       </div>
+      <p className="sr-only" aria-live="polite">
+        {notice}
+      </p>
       {filtered.length === 0 && searching ? (
         <button type="button" className="text-link" onClick={() => setQuery("")}>
           Effacer la recherche
@@ -272,6 +305,7 @@ export function SongListPage({ songs }: { songs: readonly Song[] }) {
           sort={sort}
           liveQuery={liveQuery}
           favorites={favorites.ids}
+          onToggleFavorite={toggleFavorite}
           onOpen={rememberScroll}
         />
       ))}
@@ -331,12 +365,14 @@ function DirectorySection({
   sort,
   liveQuery,
   favorites,
+  onToggleFavorite,
   onOpen,
 }: {
   section: SongSection;
   sort: SongSort;
   liveQuery: ListQuery;
   favorites: ReadonlySet<string>;
+  onToggleFavorite: (id: string) => void;
   onOpen: () => void;
 }) {
   const headingId = useId();
@@ -353,6 +389,7 @@ function DirectorySection({
               sort={sort}
               to={songPath(song.id, liveQuery)}
               favorite={favorites.has(song.id)}
+              onToggleFavorite={() => onToggleFavorite(song.id)}
               onOpen={onOpen}
             />
           </li>
@@ -367,22 +404,37 @@ function Tile({
   sort,
   to,
   favorite,
+  onToggleFavorite,
   onOpen,
 }: {
   song: Song;
   sort: SongSort;
   to: string;
   favorite: boolean;
+  onToggleFavorite: () => void;
   onOpen: () => void;
 }) {
   const parts = sublineTail(song, sort);
+  const longPress = useLongPress(onToggleFavorite);
   return (
-    <Link to={to} className="tile" onClick={onOpen}>
-      {favorite ? (
-        <span className="tile-heart" aria-hidden="true">
-          <HeartIcon filled />
-        </span>
-      ) : null}
+    <Link
+      to={to}
+      className={favorite ? "tile is-favorite" : "tile"}
+      draggable={false}
+      onClick={(event) => {
+        if (longPress.consumeClick()) {
+          event.preventDefault();
+          return;
+        }
+        onOpen();
+      }}
+      onPointerDown={longPress.onPointerDown}
+      onContextMenu={(event) => event.preventDefault()}
+      onKeyDown={longPress.onKeyDown}
+    >
+      <span className="tile-heart" aria-hidden="true">
+        <HeartIcon filled />
+      </span>
       <span className={titleClass(song.lyricsStatus)} lang="ko">
         {song.title}
       </span>
@@ -400,6 +452,80 @@ function Tile({
       <RowStatus status={song.lyricsStatus} />
     </Link>
   );
+}
+
+function useLongPress(onLongPress: () => void) {
+  const timer = useRef<number | null>(null);
+  const longPressed = useRef(false);
+  const stopListening = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timer.current !== null) window.clearTimeout(timer.current);
+      stopListening.current?.();
+    };
+  }, []);
+
+  function clearTimer() {
+    if (timer.current === null) return;
+    window.clearTimeout(timer.current);
+    timer.current = null;
+  }
+
+  function onPointerDown(event: ReactPointerEvent<HTMLAnchorElement>) {
+    if (event.button !== 0) return;
+    longPressed.current = false;
+    stopListening.current?.();
+    const originX = event.clientX;
+    const originY = event.clientY;
+    const pointerId = event.pointerId;
+    const stop = () => {
+      clearTimer();
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", stop);
+      stopListening.current = null;
+    };
+    const onMove = (move: PointerEvent) => {
+      if (move.pointerId !== pointerId) return;
+      const dx = move.clientX - originX;
+      const dy = move.clientY - originY;
+      if (dx * dx + dy * dy > LONG_PRESS_MOVE_PX * LONG_PRESS_MOVE_PX) stop();
+    };
+    const onUp = (up: PointerEvent) => {
+      if (up.pointerId !== pointerId) return;
+      stop();
+    };
+    stopListening.current = stop;
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", stop);
+    timer.current = window.setTimeout(() => {
+      timer.current = null;
+      longPressed.current = true;
+      onLongPress();
+      try {
+        navigator.vibrate?.(12);
+      } catch {
+        // Ce navigateur n’expose pas la vibration.
+      }
+    }, LONG_PRESS_MS);
+  }
+
+  function consumeClick() {
+    if (!longPressed.current) return false;
+    longPressed.current = false;
+    return true;
+  }
+
+  function onKeyDown(event: ReactKeyboardEvent<HTMLAnchorElement>) {
+    if (event.key !== "f" && event.key !== "F") return;
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    event.preventDefault();
+    onLongPress();
+  }
+
+  return { onPointerDown, consumeClick, onKeyDown };
 }
 
 function sublineTail(song: Song, sort: SongSort): Array<{ key: string; node: ReactNode }> {
